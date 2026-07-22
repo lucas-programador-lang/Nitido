@@ -7,6 +7,15 @@
 
 var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+function debounce(fn, wait){
+  var t;
+  return function(){
+    var args = arguments, ctx = this;
+    clearTimeout(t);
+    t = setTimeout(function(){ fn.apply(ctx, args); }, wait);
+  };
+}
+
 /* ---------------- Nav ---------------- */
 var navToggle = document.getElementById("navToggle");
 var navLinks = document.querySelector(".nav-links");
@@ -37,6 +46,37 @@ if ("IntersectionObserver" in window && !prefersReducedMotion){
   revealEls.forEach(function(el){ io.observe(el); });
 } else {
   revealEls.forEach(function(el){ el.classList.add("is-visible"); });
+}
+
+/* ---------------- Hero stat count-up ---------------- */
+var statEls = document.querySelectorAll(".stat-num");
+if (statEls.length && !prefersReducedMotion && "IntersectionObserver" in window){
+  var statIO = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (!entry.isIntersecting) return;
+      statIO.unobserve(entry.target);
+      var el = entry.target;
+      var raw = el.textContent.trim();
+      var match = raw.match(/(-?[\d.,]+)/);
+      if (!match) return; // no numeric portion (e.g. "24/7") — leave as-is
+      var prefix = raw.slice(0, match.index);
+      var suffix = raw.slice(match.index + match[0].length);
+      var target = parseFloat(match[0].replace(/\./g, "").replace(",", "."));
+      if (isNaN(target)) return;
+      var duration = 1100, start = null;
+      function step(ts){
+        if (start === null) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        var current = Math.round(target * eased);
+        el.textContent = prefix + current.toLocaleString("pt-BR") + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = raw;
+      }
+      requestAnimationFrame(step);
+    });
+  }, { threshold: 0.4 });
+  statEls.forEach(function(el){ statIO.observe(el); });
 }
 
 /* ---------------- FAQ render + accordion ---------------- */
@@ -70,6 +110,15 @@ if (faqList && typeof FAQS !== "undefined"){
       btn.setAttribute("aria-expanded","true");
       answer.style.maxHeight = answer.scrollHeight + "px";
     }
+  });
+
+  // The open answer's max-height was frozen in px at click-time — recompute
+  // it on resize so a reflow (orientation change, font swap) can't clip text.
+  window.addEventListener("resize", function(){
+    var openItem = faqList.querySelector(".faq-item.is-open");
+    if (!openItem) return;
+    var answer = openItem.querySelector(".faq-a");
+    answer.style.maxHeight = answer.scrollHeight + "px";
   });
 }
 
@@ -137,8 +186,9 @@ if (deviceBrandFilter && typeof DEVICES !== "undefined"){
     opt.value = b; opt.textContent = b;
     deviceBrandFilter.appendChild(opt);
   });
-  [deviceSearch, deviceBrandFilter, deviceStatusFilter].forEach(function(el){
-    el.addEventListener("input", renderDevices);
+  var renderDevicesDebounced = debounce(renderDevices, 120);
+  deviceSearch.addEventListener("input", renderDevicesDebounced);
+  [deviceBrandFilter, deviceStatusFilter].forEach(function(el){
     el.addEventListener("change", renderDevices);
   });
   renderDevices();
@@ -192,7 +242,7 @@ function updateCatCounts(){
 if (taskGrid){
   updateCatCounts();
   renderTasks();
-  taskSearch.addEventListener("input", renderTasks);
+  taskSearch.addEventListener("input", debounce(renderTasks, 120));
   catChips.addEventListener("click", function(e){
     var chip = e.target.closest(".chip");
     if (!chip) return;
@@ -250,6 +300,13 @@ function initHeroRig(){
 
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  var isVisible = true;
+  if ("IntersectionObserver" in window){
+    new IntersectionObserver(function(entries){
+      isVisible = entries[0].isIntersecting;
+    }, { threshold: 0 }).observe(canvas);
+  }
 
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
@@ -352,6 +409,7 @@ function initHeroRig(){
   var clock = new THREE.Clock();
   function animate(){
     requestAnimationFrame(animate);
+    if (!isVisible || document.hidden) return;
     var t = clock.getElapsedTime();
 
     targetX += (mouseX - targetX) * 0.03;
@@ -388,6 +446,13 @@ function initAngleDemo(){
 
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  var isVisible = true;
+  if ("IntersectionObserver" in window){
+    new IntersectionObserver(function(entries){
+      isVisible = entries[0].isIntersecting;
+    }, { threshold: 0 }).observe(canvas);
+  }
 
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 50);
@@ -444,6 +509,7 @@ function initAngleDemo(){
   var clock = new THREE.Clock();
   function animate(){
     requestAnimationFrame(animate);
+    if (!isVisible || document.hidden) return;
     var t = clock.getElapsedTime();
     head.rotation.y = Math.sin(t * 0.3) * 0.4;
     mountArm.rotation.y = Math.sin(t * 0.3) * 0.4;
