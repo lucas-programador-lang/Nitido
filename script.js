@@ -16,6 +16,20 @@ function debounce(fn, wait){
   };
 }
 
+/* ---------------- Hero stats + summary cards: derive from data, don't hand-type ---------------- */
+if (typeof DEVICES !== "undefined" && typeof TASKS !== "undefined"){
+  var counts = { ok: 0, pending: 0, not_working: 0, unknown: 0 };
+  DEVICES.forEach(function(d){ counts[overallStatus(d)]++; });
+
+  var setText = function(id, val){ var el = document.getElementById(id); if (el) el.textContent = val; };
+  setText("statDevicesOk", counts.ok);
+  setText("statTasks", TASKS.length);
+  setText("summaryOk", counts.ok);
+  setText("summaryPending", counts.pending);
+  setText("summaryBad", counts.not_working);
+  setText("summaryUnknown", counts.unknown);
+}
+
 /* ---------------- Nav ---------------- */
 var navToggle = document.getElementById("navToggle");
 var navLinks = document.querySelector(".nav-links");
