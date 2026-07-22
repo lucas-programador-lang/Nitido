@@ -170,7 +170,7 @@ html{ scrollbar-color: var(--gold) var(--bg-1); scrollbar-width: thin; }
 .disclaimer-line{ color: var(--ink-faint); font-size: .85rem; border-top: 1px solid var(--line); padding-top: 1.4rem; }
 
 /* ============ Summary cards ============ */
-.summary-cards{ display:grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 2.4rem; }
+.summary-cards{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2.4rem; }
 .summary-card{
   background: var(--bg-2); border:1px solid var(--line); border-radius: var(--radius-m);
   padding: 1.6rem; display:flex; flex-direction:column; gap:.3rem; box-shadow: var(--shadow-card);
@@ -181,6 +181,7 @@ html{ scrollbar-color: var(--gold) var(--bg-1); scrollbar-width: thin; }
 .summary-num.ok{ color: var(--teal); }
 .summary-num.pending{ color: var(--gold-soft); }
 .summary-num.bad{ color: var(--red); }
+.summary-num.unknown{ color: var(--ink-dim); }
 .summary-label{ font-weight:600; }
 .summary-note{ color: var(--ink-faint); font-size: .82rem; }
 
