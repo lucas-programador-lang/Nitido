@@ -1,4 +1,7 @@
-// Dados gerados a partir do conteudo oficial do guia. Nao editar names/ids sem atualizar o app.js
+// Dados gerados a partir do conteudo oficial do guia.
+// Os contadores exibidos no index.html (hero e resumo de "Celulares") sao
+// calculados a partir deste array pelo script.js — nao precisam mais ser
+// digitados a mao, e nao vao dessincronizar quando este arquivo mudar.
 
 const CAT_LABELS = {"tidy": "Organização", "laundry": "Lavanderia", "kitchen": "Cozinha", "misc": "Diversos"};
 
