@@ -5,8 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NÍTIDO — Guia independente de gravação para HUB &amp; MINUTE</title>
 <meta name="description" content="Guia independente com compatibilidade de celulares, biblioteca de tarefas traduzida e boas práticas de gravação para o app MINUTE.">
+<meta name="theme-color" content="#0A0C0F">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%230B0E11%22/><circle cx=%2250%22 cy=%2250%22 r=%2222%22 fill=%22none%22 stroke=%22%23C9A227%22 stroke-width=%228%22/></svg>">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="NÍTIDO — Guia independente de gravação para HUB &amp; MINUTE">
+<meta property="og:description" content="Confira se o seu celular grava no MINUTE, encontre a tradução exata de cada tarefa e aprenda o ângulo recomendado pela HUB.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="NÍTIDO — Guia independente de gravação para HUB &amp; MINUTE">
+<meta name="twitter:description" content="Compatibilidade de celulares, tarefas traduzidas e boas práticas de gravação para o MINUTE, tudo em um só lugar.">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -47,8 +57,8 @@
       <a class="btn btn-ghost btn-lg" href="#celulares">Ver compatibilidade →</a>
     </div>
     <div class="hero-stats">
-      <div class="stat"><span class="stat-num">14</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
-      <div class="stat"><span class="stat-num">84</span><span class="stat-label">tarefas traduzidas</span></div>
+      <div class="stat"><span class="stat-num" id="statDevicesOk">13</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
+      <div class="stat"><span class="stat-num" id="statTasks">84</span><span class="stat-label">tarefas traduzidas</span></div>
       <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
     </div>
   </div>
@@ -93,19 +103,24 @@
 
   <div class="summary-cards reveal">
     <div class="summary-card">
-      <span class="summary-num ok">14</span>
+      <span class="summary-num ok" id="summaryOk">13</span>
       <span class="summary-label">Compatíveis com o MINUTE</span>
       <span class="summary-note">confira a fonte em cada modelo</span>
     </div>
     <div class="summary-card">
-      <span class="summary-num pending">3</span>
+      <span class="summary-num pending" id="summaryPending">3</span>
       <span class="summary-label">Somente HUB</span>
       <span class="summary-note">modelos aguardando teste no MINUTE</span>
     </div>
     <div class="summary-card">
-      <span class="summary-num bad">2</span>
+      <span class="summary-num bad" id="summaryBad">2</span>
       <span class="summary-label">Não funcionam atualmente</span>
       <span class="summary-note">não recomendamos em nenhuma das 3 plataformas</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-num unknown" id="summaryUnknown">1</span>
+      <span class="summary-label">Sem confirmação da HUB</span>
+      <span class="summary-note">funciona no MINUTE, mas a HUB ainda não confirmou</span>
     </div>
   </div>
 
