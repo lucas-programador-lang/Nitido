@@ -481,3 +481,36 @@ select:focus-visible{ border-color: var(--gold-soft); }
   .hero-stats{ gap: 1.6rem; }
   .section{ padding: 4.5rem 6vw; }
 }
+
+
+/* PERSONALIZAÇÃO INTELIGENTE DO HERO */
+#heroDynamic {
+  transition: all 0.8s cubic-bezier(0.22, 0.9, 0.3, 1);
+  opacity: 0;
+}
+#heroDynamic.visible { opacity: 1; }
+
+.desktop-mode {
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.qr-container {
+  background: rgba(255,255,255,0.96);
+  padding: 26px;
+  border-radius: 24px;
+  display: inline-block;
+  box-shadow: 0 25px 55px -10px rgba(0,0,0,0.7);
+  margin: 2rem 0;
+}
+
+.hero-brand-apple   { --accent: #C9A227; }
+.hero-brand-samsung { --accent: #0A66C2; }
+.hero-brand-motorola{ --accent: #E60000; }
+.hero-brand-google  { --accent: #34A853; }
+.hero-brand-generic { --accent: #C9A227; }
+
+.accent-serif {
+  color: var(--accent);
+}
