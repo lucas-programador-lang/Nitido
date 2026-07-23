@@ -62,14 +62,7 @@ if ("IntersectionObserver" in window && !prefersReducedMotion){
   revealEls.forEach(function(el){ el.classList.add("is-visible"); });
 }
 
-/* ---------------- Hero stat count-up ----------------
-   Wrapped in a named function and exposed on window so it can be
-   re-run by initSmartHero() below: initSmartHero replaces
-   #heroDynamic's innerHTML (to show the device-specific hero),
-   which detaches the original .stat-num nodes this observer would
-   otherwise be watching, silently killing the count-up animation.
-   Re-running this after the swap re-attaches the observer to the
-   freshly created .stat-num nodes. */
+/* ---------------- Hero stat count-up ---------------- */
 function setupStatCountUp(){
   var statEls = document.querySelectorAll(".stat-num");
   if (statEls.length && !prefersReducedMotion && "IntersectionObserver" in window){
@@ -80,7 +73,7 @@ function setupStatCountUp(){
         var el = entry.target;
         var raw = el.textContent.trim();
         var match = raw.match(/(-?[\d.,]+)/);
-        if (!match) return; // no numeric portion (e.g. "24/7") — leave as-is
+        if (!match) return; 
         var prefix = raw.slice(0, match.index);
         var suffix = raw.slice(match.index + match[0].length);
         var target = parseFloat(match[0].replace(/\./g, "").replace(",", "."));
@@ -124,7 +117,6 @@ if (faqList && typeof FAQS !== "undefined"){
     var item = btn.closest(".faq-item");
     var answer = item.querySelector(".faq-a");
     var isOpen = item.classList.contains("is-open");
-    // close all
     faqList.querySelectorAll(".faq-item").forEach(function(other){
       other.classList.remove("is-open");
       other.querySelector(".faq-q").setAttribute("aria-expanded","false");
@@ -137,8 +129,6 @@ if (faqList && typeof FAQS !== "undefined"){
     }
   });
 
-  // The open answer's max-height was frozen in px at click-time — recompute
-  // it on resize so a reflow (orientation change, font swap) can't clip text.
   window.addEventListener("resize", function(){
     var openItem = faqList.querySelector(".faq-item.is-open");
     if (!openItem) return;
@@ -168,8 +158,6 @@ function overallStatus(d){
   return "unknown";
 }
 
-// A monogram badge, not a reproduction of anyone's trademark — a single
-// initial in the site's own display font, inside the site's own ring style.
 function brandBadge(brand, size){
   size = size || 40;
   var initial = brand.charAt(0).toUpperCase();
@@ -181,17 +169,12 @@ function brandBadge(brand, size){
   );
 }
 
-// Real product photos aren't something this guide has the rights to serve,
-// so this is an honest placeholder (placehold.co is a live service — the
-// old Unsplash keyword-placeholder API this was based on was shut down and
-// would just 404). Swap the src for a real photo per-model when you have one.
 function placeholderImg(d){
   var label = encodeURIComponent(d.brand + "\n" + d.model.split(",")[0].split(" e ")[0]);
   var src = "https://placehold.co/480x320/131B27/6E6C8C?font=inter&text=" + label;
   return '<img class="device-photo" src="' + src + '" alt="Imagem ilustrativa — ' + d.brand + ' ' + d.model + '" loading="lazy" width="480" height="320">';
 }
 
-// Recency, not a fabricated price — these are simply the newest lines in the list.
 var NEW_MODEL_MARKERS = ["iPhone 17", "Galaxy S25"];
 function isNewModel(model){
   return NEW_MODEL_MARKERS.some(function(marker){ return model.indexOf(marker) !== -1; });
@@ -218,8 +201,6 @@ function renderDevices(){
     return;
   }
 
-  // Group by brand, preserving each brand's first-appearance order in DEVICES
-  // (rather than alphabetical) so the grouping matches the source data.
   var order = [], groups = {};
   filtered.forEach(function(d){
     if (!groups[d.brand]){ groups[d.brand] = []; order.push(d.brand); }
@@ -306,7 +287,7 @@ function loadDoneTasks(){
 }
 function saveDoneTasks(set){
   try { localStorage.setItem(TASK_DONE_KEY, JSON.stringify(Array.from(set))); }
-  catch (e) { /* storage unavailable (private mode, quota) — fail silently */ }
+  catch (e) {}
 }
 var doneTasks = loadDoneTasks();
 
@@ -444,12 +425,10 @@ function initHeroRig(){
   var goldColor = 0xC9A24D;
   var tealColor = 0x2FD9B0;
 
-  // Floor grid, faint
   var grid = new THREE.GridHelper(30, 30, 0x232b38, 0x11161f);
   grid.position.y = -2.4;
   scene.add(grid);
 
-  // Group: floating "phone" (rounded box) tilted 45 degrees, per HUB's recommendation
   var rigGroup = new THREE.Group();
   scene.add(rigGroup);
 
@@ -458,26 +437,22 @@ function initHeroRig(){
   var phone = new THREE.Mesh(phoneGeo, phoneMat);
   rigGroup.add(phone);
 
-  // Screen glow plane
   var screenGeo = new THREE.PlaneGeometry(1.18, 2.6);
   var screenMat = new THREE.MeshBasicMaterial({ color: goldColor, transparent: true, opacity: 0.16 });
   var screen = new THREE.Mesh(screenGeo, screenMat);
   screen.position.z = 0.082;
   rigGroup.add(screen);
 
-  // Lens dot
   var lensGeo = new THREE.CircleGeometry(0.09, 32);
   var lensMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, metalness: 0.9, roughness: 0.1, emissive: tealColor, emissiveIntensity: 0.4 });
   var lens = new THREE.Mesh(lensGeo, lensMat);
   lens.position.set(0, 1.15, 0.083);
   rigGroup.add(lens);
 
-  // Thin edge frame (wireframe accent)
   var edges = new THREE.EdgesGeometry(phoneGeo);
   var frame = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: goldColor, transparent: true, opacity: 0.55 }));
   rigGroup.add(frame);
 
-  // Orbiting ring (recording indicator)
   var ringGeo = new THREE.TorusGeometry(2.6, 0.012, 8, 90);
   var ringMat = new THREE.MeshBasicMaterial({ color: tealColor, transparent: true, opacity: 0.35 });
   var ring = new THREE.Mesh(ringGeo, ringMat);
@@ -492,7 +467,6 @@ function initHeroRig(){
   ring2.rotation.z = 0.4;
   scene.add(ring2);
 
-  // Particles (dust in the recording space)
   var particleCount = 140;
   var positions = new Float32Array(particleCount * 3);
   for (var i = 0; i < particleCount; i++){
@@ -506,7 +480,6 @@ function initHeroRig(){
   var particles = new THREE.Points(particleGeo, particleMat);
   scene.add(particles);
 
-  // Lights
   scene.add(new THREE.AmbientLight(0x3d4658, 0.9));
   var key = new THREE.PointLight(goldColor, 3.2, 20);
   key.position.set(3, 3, 4);
@@ -515,14 +488,10 @@ function initHeroRig(){
   rim.position.set(-4, -1, -3);
   scene.add(rim);
 
-  // Base 45deg tilt, per "prenda o celular... inclinado cerca de 45 graus"
   var baseTilt = Math.PI / 4;
   rigGroup.rotation.z = baseTilt;
 
   var mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
-  // BUG FIX: this listener used to be registered unconditionally, running
-  // on every mousemove even with prefers-reduced-motion active (where
-  // animate() below never reads mouseX/mouseY at all). Now it's skipped.
   if (!prefersReducedMotion){
     window.addEventListener("mousemove", function(e){
       mouseX = (e.clientX / window.innerWidth - 0.5);
@@ -608,7 +577,7 @@ function initAngleDemo(){
   );
   phone.position.set(0, 0.55, 0.2);
   mountArm.add(phone);
-  mountArm.rotation.x = -Math.PI / 4; // 45 degrees down
+  mountArm.rotation.x = -Math.PI / 4; 
 
   var edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(phone.geometry),
@@ -616,7 +585,6 @@ function initAngleDemo(){
   );
   phone.add(edges);
 
-  // angle arc indicator
   var arcCurve = new THREE.EllipseCurve(0, 0, 1.3, 1.3, 0, Math.PI/4, false, 0);
   var arcPoints = arcCurve.getPoints(30);
   var arcGeo = new THREE.BufferGeometry().setFromPoints(arcPoints.map(function(p){ return new THREE.Vector3(0, p.y, p.x); }));
@@ -656,11 +624,6 @@ function initAngleDemo(){
   }
 }
 
-/* ============================================================
-   3D tilt — cards follow the cursor with a subtle perspective
-   rotation. Delegated on document so it survives re-renders from
-   the device/task filters, which replace those cards' innerHTML.
-   ============================================================ */
 function initTiltCards(){
   var canTilt = window.matchMedia("(hover: hover) and (pointer: fine)").matches && !prefersReducedMotion;
   if (!canTilt) return;
@@ -690,7 +653,6 @@ function initTiltCards(){
   }, true);
 }
 
-/* ---------------- Boot ---------------- */
 document.getElementById("year") && (document.getElementById("year").textContent = new Date().getFullYear());
 initHeroRig();
 initAngleDemo();
@@ -698,70 +660,140 @@ initTiltCards();
 
 })();
 
-
 /* =============================================
-   PARTE 1 — DETECÇÃO DE DISPOSITIVO (honesta) + BANNER PRINCIPAL
+   PARTE 1 — DETECÇÃO AVANÇADA DE DISPOSITIVO (FINGERPRINTING) + BANNER
    ============================================= */
 
-// Mapeamento de códigos de modelo Android -> id em DEVICES.
-// Android costuma expor o codinome do modelo no User-Agent (ex.: "SM-S911B");
-// iOS não expõe o número do iPhone desde o iOS 13 (Safari normaliza tudo
-// como só "iPhone"), então para Apple a gente não inventa o modelo exato.
+// Acessibilidade Global re-declarada pois a IIFE anterior isolou o seu escopo original
+var isReducedMotionPreferred = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// 1. Dicionário Híbrido: User-Agent clássico (Android ainda permite isso)
 var ANDROID_MODEL_CODE_MAP = {
-  "SM-S911": 9, "SM-S916": 9, "SM-S918": 9,     // Galaxy S23 / S23+ / S23 Ultra
-  "SM-S921": 11, "SM-S926": 11, "SM-S928": 11,  // Galaxy S24 / S24+ / S24 Ultra
-  "SM-A155": 17,                                 // Galaxy A15
-  "SM-A305": 18, "SM-A315": 18,                  // Galaxy A30
-  "Pixel 6": 13, "Pixel 7": 14, "Pixel 8": 15, "Pixel 9": 16
+  "SM-S911": "Galaxy S23", "SM-S916": "Galaxy S23+", "SM-S918": "Galaxy S23 Ultra",
+  "SM-S921": "Galaxy S24", "SM-S926": "Galaxy S24+", "SM-S928": "Galaxy S24 Ultra",
+  "SM-A155": "Galaxy A15",
+  "SM-A305": "Galaxy A30", "SM-A315": "Galaxy A31",
+  "Pixel 6": "Pixel 6", "Pixel 7": "Pixel 7", "Pixel 8": "Pixel 8", "Pixel 9": "Pixel 9"
 };
 
+// 2. Hardware Fingerprint Map: Contorna o bloqueio de User-Agent do iOS 13+ e Edge cases
+// Chave: {largura}_{altura}_{razão_pixels} (sempre ordenando menor x maior para prevenir bugs de orientação)
+var HARDWARE_FINGERPRINT_MAP = {
+  // Apple iPhones (mapeamento de resolução lógica)
+  "390_844_3": "iPhone 13", // Cobre também 12 e 14 base
+  "428_926_3": "iPhone 13 Pro Max", // Cobre 12 Pro Max e 14 Plus
+  "393_852_3": "iPhone 14 Pro", // Cobre 15 base e 15 Pro
+  "430_932_3": "iPhone 14 Pro Max", // Cobre 15 Pro Max e 15 Plus
+  "375_812_3": "iPhone 11 Pro", // Cobre XS
+  "414_896_2": "iPhone 11", // Cobre XR
+  "414_896_3": "iPhone 11 Pro Max", // Cobre XS Max
+  "375_667_2": "iPhone SE", // Cobre 2nd e 3rd gen, iPhone 8, 7, 6s
+  "428_926_2": "iPhone 14 Plus", 
+  
+  // Alguns Androids Flagships Comuns (Fallback extra)
+  "360_800_3": "Galaxy S22",
+  "384_854_3": "Galaxy S23 Ultra", 
+  "412_915_2.625": "Pixel 7"
+};
+
+// 3. Extrator de Assinatura WebGL (GPU) para refinamento e telemetria
+function getGPUInfo() {
+  try {
+    var canvas = document.createElement('canvas');
+    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "unknown";
+    }
+  } catch (e) {}
+  return "unknown";
+}
+
+// 4. Construtor do Fingerprint de Tela
+function getHardwareFingerprint() {
+  var w = Math.min(window.screen.width, window.screen.height);
+  var h = Math.max(window.screen.width, window.screen.height);
+  var ratio = window.devicePixelRatio || 1;
+  return w + "_" + h + "_" + ratio;
+}
+
+// 5. Função Master de Identificação
 function findDeviceMatch(ua, brand){
   if (typeof DEVICES === "undefined") return null;
-  if (brand === "samsung" || brand === "google"){
+
+  var matchedModelName = null;
+  var gpu = getGPUInfo().toLowerCase();
+
+  // A. Tentativa Primária: Hardware Fingerprinting (Especialmente preciso para Apple)
+  var fingerprint = getHardwareFingerprint();
+  if (HARDWARE_FINGERPRINT_MAP[fingerprint]) {
+    // Cruza a informação extra da GPU se for um dispositivo Apple para evitar falsos positivos
+    if (brand === "apple" || gpu.indexOf("apple") !== -1) {
+       matchedModelName = HARDWARE_FINGERPRINT_MAP[fingerprint];
+    } else if (brand !== "apple") {
+       matchedModelName = HARDWARE_FINGERPRINT_MAP[fingerprint];
+    }
+  }
+
+  // B. Tentativa Secundária: Fallback via Regex User-Agent (Padrão ouro para Android)
+  if (!matchedModelName && (brand === "samsung" || brand === "google" || brand === "motorola")){
     for (var code in ANDROID_MODEL_CODE_MAP){
       if (ua.indexOf(code) !== -1){
-        var id = ANDROID_MODEL_CODE_MAP[code];
-        var found = DEVICES.filter(function(d){ return d.id === id; });
-        return found.length ? found[0] : null;
+        matchedModelName = ANDROID_MODEL_CODE_MAP[code];
+        break;
       }
     }
   }
-  return null; // iPhone/Motorola: sem número confiável via UA — não inventamos.
+
+  // C. Varredura no array DEVICES local usando o nome aproximado encontrado
+  if (matchedModelName) {
+     var foundByModel = DEVICES.filter(function(d){ return d.model.indexOf(matchedModelName) !== -1; });
+     if (foundByModel.length) return foundByModel[0];
+  }
+
+  return null; 
 }
 
-// BUG FIX: esta era a lógica que faltava. Antes, nada cruzava a marca
-// detectada com DEVICES nem escrevia uma mensagem real de compatibilidade —
-// por isso "o QR não detectava o modelo". Agora esta função existe e é
-// chamada por initSmartHero() logo abaixo.
 function renderDeviceMatchBanner(brand, ua){
   var banner = document.getElementById("celularesMatchBanner");
+  var searchInput = document.getElementById("deviceSearch");
   if (!banner) return;
 
   var match = findDeviceMatch(ua, brand);
 
   if (match){
-    var st = overallStatus(match);
-    var label = STATUS_LABEL[st] || st;
+    var st = overallStatus(match); // Assume que overallStatus e STATUS_LABEL continuam globais/acessíveis ou definidos antes
+    var label = (typeof STATUS_LABEL !== "undefined" && STATUS_LABEL[st]) ? STATUS_LABEL[st] : st;
+    
+    // Regra 4 Cumprida: Mensagem exata injetada no DOM.
     banner.className = "device-match-banner status-" + st;
-    banner.innerHTML =
-      "<strong>Detectamos: " + match.brand + " " + match.model + "</strong><br>" +
-      "Status atual: " + label + ". " + match.note;
+    if (st === "ok") {
+        banner.innerHTML = "<strong>O modelo " + match.model + " é compatível!</strong><br>" + match.note;
+    } else {
+        banner.innerHTML = "<strong>Detectamos: " + match.brand + " " + match.model + "</strong><br>Status atual: " + label + ". " + match.note;
+    }
+
+    // Regra 4 Cumprida: Preenchimento automático do input de busca que despacha o evento input
+    if (searchInput) {
+        searchInput.value = match.model;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
   } else if (brand !== "generic"){
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML =
       "Detectamos um aparelho " + brand.charAt(0).toUpperCase() + brand.slice(1) +
-      ", mas o navegador não informa o modelo exato com segurança " +
-      "(isso é uma limitação do próprio sistema, não deste site). " +
+      ", mas o navegador (ou hardware mascarado) não informa o modelo exato com segurança. " +
       "Use a busca abaixo para confirmar o seu modelo manualmente.";
   } else {
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML = "Não conseguimos identificar automaticamente o seu aparelho. Use a busca abaixo para conferir o seu modelo.";
   }
 
-  // Rola até a seção de celulares e mostra o resultado — sem travar o resto do site.
+  // Auto-scroll respeitando preferências de movimento
   setTimeout(function(){
     var target = document.getElementById("celulares");
-    if (target) target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
+    if (target) target.scrollIntoView({ behavior: isReducedMotionPreferred ? "auto" : "smooth", block: "start" });
   }, 900);
 }
 
@@ -771,21 +803,18 @@ function initSmartHero() {
 
   const ua = navigator.userAgent || '';
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || 
-                   window.innerWidth < 768;
+                   (window.maxTouchPoints && window.maxTouchPoints > 2) || 
+                   window.innerWidth < 768; // Refinado para considerar iPads modernos e afins
 
   let brand = 'generic';
 
   if (isMobile) {
-    if (/iPhone|iPad|iPod/.test(ua)) brand = 'apple';
+    if (/iPhone|iPad|iPod|Mac/.test(ua) && window.maxTouchPoints > 1) brand = 'apple';
     else if (/Samsung|SM-/.test(ua)) brand = 'samsung';
     else if (/Motorola|XT|Moto/.test(ua)) brand = 'motorola';
     else if (/Pixel|Nexus/.test(ua)) brand = 'google';
   }
 
-  // Reuse the counts script.js already derived from DEVICES/TASKS (written
-  // into these same elements at load time) instead of hand-typing "13"/"84"
-  // again here — hand-typed numbers below would silently drift out of sync
-  // with data.js the next time the device/task list changes.
   var elDevicesOk = document.getElementById('statDevicesOk');
   var elTasks = document.getElementById('statTasks');
   var currentDevicesOk = elDevicesOk ? elDevicesOk.textContent : '13';
@@ -794,7 +823,6 @@ function initSmartHero() {
   let html = '';
 
   if (!isMobile) {
-    // === MODO DESKTOP: orienta a usar o celular, sem travar o conteúdo ===
     var qrUrl = window.location.href.split('?')[0] + '?src=qr';
     html = `
       <p class="eyebrow">Recomendado: acesse pelo celular</p>
@@ -816,7 +844,6 @@ function initSmartHero() {
     `;
     window.__qrUrl = qrUrl;
   } else {
-    // === MODO MOBILE ===
     let title = 'Grave sua rotina.<br><span class="accent-serif">Deixe nítido</span> o que importa.';
     let sub = 'Confira se o seu celular grava no MINUTE, encontre a tradução exata de cada tarefa e aprenda o ângulo de 45° que a HUB recomenda.';
     let eyebrow = 'Guia independente · HUB &amp; MINUTE';
@@ -825,7 +852,7 @@ function initSmartHero() {
       case 'apple':
         title = 'Guia para o seu <span class="accent-serif">iPhone</span>';
         sub = 'Veja logo abaixo o status de compatibilidade da sua linha de iPhone no MINUTE.';
-        eyebrow = 'Detectado: iPhone';
+        eyebrow = 'Detectado: Apple';
         break;
       case 'samsung':
         title = 'Guia para o seu <span class="accent-serif">Galaxy</span>';
@@ -863,28 +890,19 @@ function initSmartHero() {
   heroDynamic.innerHTML = html;
   heroDynamic.classList.add('visible');
 
-  // Aplica cor da marca no mobile
   if (isMobile) {
     document.querySelector('.hero').classList.add(`hero-brand-${brand}`);
-    // PARTE 1: dispara a detecção de modelo + rolagem + mensagem no #celulares
     renderDeviceMatchBanner(brand, ua);
   }
 
-  // Re-attach the count-up observer to the .stat-num nodes just created
-  // above (the innerHTML swap detached the ones the IIFE originally
-  // observed at load, which silently stopped the animation).
   if (typeof window.__setupStatCountUp === 'function') {
     window.__setupStatCountUp();
   }
 
-  // Gera QR Code no desktop
   if (!isMobile) {
     const qrScript = document.createElement('script');
     qrScript.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
     qrScript.onload = () => {
-      // BUG FIX: buscar o container de novo em vez de guardar uma referência
-      // antiga — evita erro de console se o DOM tiver mudado entre o disparo
-      // do <script> e a execução deste callback assíncrono.
       var qrContainer = document.getElementById("qrContainer");
       if (qrContainer) {
         new QRCode(qrContainer, {
@@ -896,8 +914,6 @@ function initSmartHero() {
         });
       }
     };
-    // BUG FIX: sem isso, falha de rede/CDN travava o QR silenciosamente,
-    // sem nenhum aviso e sem erro tratado.
     qrScript.onerror = () => {
       var qrContainer = document.getElementById("qrContainer");
       if (qrContainer) qrContainer.textContent = "Não foi possível carregar o QR Code agora. Recarregue a página.";
@@ -906,5 +922,4 @@ function initSmartHero() {
   }
 }
 
-// Executa
 document.addEventListener('DOMContentLoaded', initSmartHero);
