@@ -717,7 +717,18 @@ function getHardwareFingerprint() {
   return w + "_" + h + "_" + ratio;
 }
 
-// 5. Função Master de Identificação
+// NOVO — helper de normalização usado pelo matching flexível de findDeviceMatch.
+// Baixa a caixa e remove vírgulas/pontos, para que "iPhone 15 Pro Max" e
+// "iPhone 15, 15 Pro, 15 Pro Max" virem strings comparáveis por palavra-chave.
+function normalizeModelString(str){
+  return String(str)
+    .toLowerCase()
+    .replace(/[,.]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// 5. Função Master de Identificação (CORRIGIDA — matching flexível por palavras-chave)
 function findDeviceMatch(ua, brand){
   if (typeof DEVICES === "undefined") return null;
 
@@ -745,10 +756,31 @@ function findDeviceMatch(ua, brand){
     }
   }
 
-  // C. Varredura no array DEVICES local usando o nome aproximado encontrado
+  // C. Varredura no array DEVICES local — matching flexível por palavras-chave
+  // em vez de .indexOf() rígido. Resolve casos como "iPhone 15 Pro Max" detectado no
+  // hardware batendo com "iPhone 15, 15 Pro, 15 Pro Max" cadastrado em DEVICES.
   if (matchedModelName) {
-     var foundByModel = DEVICES.filter(function(d){ return d.model.indexOf(matchedModelName) !== -1; });
-     if (foundByModel.length) return foundByModel[0];
+    var normalizedTarget = normalizeModelString(matchedModelName);
+    var keywords = normalizedTarget.split(" ").filter(Boolean);
+
+    // Passagem 1 (estrita): exige que TODAS as palavras-chave detectadas apareçam
+    // no texto do modelo cadastrado (ordem não importa, maiúsculas ignoradas).
+    var foundByModel = DEVICES.filter(function(d){
+      var modelNorm = normalizeModelString(d.model);
+      return keywords.every(function(kw){ return modelNorm.indexOf(kw) !== -1; });
+    });
+
+    // Passagem 2 (flexível): se a estrita não achou nada, aceita quando pelo menos
+    // todas as palavras-chave MENOS UMA baterem (cobre pequenas variações de escrita).
+    if (!foundByModel.length && keywords.length > 1){
+      foundByModel = DEVICES.filter(function(d){
+        var modelNorm = normalizeModelString(d.model);
+        var hits = keywords.filter(function(kw){ return modelNorm.indexOf(kw) !== -1; }).length;
+        return hits >= keywords.length - 1;
+      });
+    }
+
+    if (foundByModel.length) return foundByModel; // retorna um ARRAY de compatíveis
   }
 
   return null; 
@@ -759,7 +791,11 @@ function renderDeviceMatchBanner(brand, ua){
   var searchInput = document.getElementById("deviceSearch");
   if (!banner) return;
 
-  var match = findDeviceMatch(ua, brand);
+  var BRAND_LABEL = { apple: "Apple", samsung: "Samsung", motorola: "Motorola", google: "Google" };
+
+  var matchResult = findDeviceMatch(ua, brand);
+  // findDeviceMatch agora pode retornar um array de compatíveis — pega o primeiro item.
+  var match = Array.isArray(matchResult) ? matchResult[0] : matchResult;
 
   if (match){
     var st = overallStatus(match); // Assume que overallStatus e STATUS_LABEL continuam globais/acessíveis ou definidos antes
@@ -780,11 +816,13 @@ function renderDeviceMatchBanner(brand, ua){
     }
 
   } else if (brand !== "generic"){
+    // Marca identificada, mas sem modelo exato cruzado no array DEVICES.
+    // Mensagem positiva/comercial em vez do texto de erro anterior.
+    var brandLabel = BRAND_LABEL[brand] || (brand.charAt(0).toUpperCase() + brand.slice(1));
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML =
-      "Detectamos um aparelho " + brand.charAt(0).toUpperCase() + brand.slice(1) +
-      ", mas o navegador (ou hardware mascarado) não informa o modelo exato com segurança. " +
-      "Use a busca abaixo para confirmar o seu modelo manualmente.";
+      "<strong>Aparelho da linha " + brandLabel + " detectado!</strong><br>" +
+      "Confira a tabela abaixo para ver o status exato do seu modelo.";
   } else {
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML = "Não conseguimos identificar automaticamente o seu aparelho. Use a busca abaixo para conferir o seu modelo.";
