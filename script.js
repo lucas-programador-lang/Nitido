@@ -33,18 +33,34 @@ if (typeof DEVICES !== "undefined" && typeof TASKS !== "undefined"){
 /* ---------------- Nav ---------------- */
 var navToggle = document.getElementById("navToggle");
 var navLinks = document.querySelector(".nav-links");
-if (navToggle){
+if (navToggle && navLinks){
   navToggle.addEventListener("click", function(){
     var open = navLinks.classList.toggle("is-open");
     navToggle.setAttribute("aria-expanded", open ? "true" : "false");
   });
-  document.querySelectorAll(".nav-links a").forEach(function(a){
+  navLinks.querySelectorAll("a").forEach(function(a){
     a.addEventListener("click", function(){
       navLinks.classList.remove("is-open");
       navToggle.setAttribute("aria-expanded", "false");
     });
   });
 }
+
+/* ---------------- Smooth scroll para links internos (#âncora) ----------------
+   Delegado uma única vez no documento — evita listeners duplicados por link
+   e funciona mesmo para elementos injetados dinamicamente (ex: brandNav). */
+document.addEventListener("click", function(e){
+  var link = e.target.closest('a[href^="#"]');
+  if (!link) return;
+  var hash = link.getAttribute("href");
+  if (!hash || hash === "#") return;
+  var target;
+  try { target = document.querySelector(hash); } catch (err) { target = null; }
+  if (!target) return;
+  e.preventDefault();
+  target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
+  if (history.pushState) history.pushState(null, "", hash);
+}, false);
 
 /* ---------------- Reveal on scroll ---------------- */
 var revealEls = document.querySelectorAll(".reveal");
@@ -73,7 +89,7 @@ function setupStatCountUp(){
         var el = entry.target;
         var raw = el.textContent.trim();
         var match = raw.match(/(-?[\d.,]+)/);
-        if (!match) return; 
+        if (!match) return;
         var prefix = raw.slice(0, match.index);
         var suffix = raw.slice(match.index + match[0].length);
         var target = parseFloat(match[0].replace(/\./g, "").replace(",", "."));
@@ -99,7 +115,8 @@ window.__setupStatCountUp = setupStatCountUp;
 
 /* ---------------- FAQ render + accordion ---------------- */
 var faqList = document.getElementById("faqList");
-if (faqList && typeof FAQS !== "undefined"){
+if (faqList && typeof FAQS !== "undefined" && !faqList.dataset.rendered){
+  faqList.dataset.rendered = "true";
   FAQS.forEach(function(faq){
     var item = document.createElement("div");
     item.className = "faq-item";
@@ -129,12 +146,12 @@ if (faqList && typeof FAQS !== "undefined"){
     }
   });
 
-  window.addEventListener("resize", function(){
+  window.addEventListener("resize", debounce(function(){
     var openItem = faqList.querySelector(".faq-item.is-open");
     if (!openItem) return;
     var answer = openItem.querySelector(".faq-a");
     answer.style.maxHeight = answer.scrollHeight + "px";
-  });
+  }, 150));
 }
 
 /* ---------------- Devices: render + filter ---------------- */
@@ -158,13 +175,45 @@ function overallStatus(d){
   return "unknown";
 }
 
+/* ============================================================
+   Logos oficiais das marcas — SVG vetorial (viewBox 24x24), com
+   fill="currentColor" para herdar cor/hover do CSS automaticamente.
+   Representações estilizadas em traço único; para peças de marketing
+   oficiais, use sempre os brand kits originais de cada fabricante.
+   ============================================================ */
+var BRAND_LOGO_PATHS = {
+  apple:
+    '<path fill="currentColor" d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.87-1.99 1.55-3.014 1.55-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.145-1.64 3.243-1.68.03.13.05.29.05.45zM20.5 17.14c-.03.07-.463 1.58-1.518 3.12-.94 1.34-1.94 2.71-3.492 2.71-1.55 0-1.94-.9-3.734-.9-1.762 0-2.196.87-3.732.9-1.535.03-2.612-1.44-3.586-2.77-1.945-2.75-3.42-7.79-1.44-11.28.98-1.73 2.72-2.82 4.62-2.85 1.44-.03 2.79.97 3.665.97.87 0 2.53-1.2 4.27-1.02.727.03 2.77.29 4.09 2.22-.104.06-2.44 1.42-2.41 4.24.03 3.38 2.96 4.5 2.967 4.66z"/>',
+  samsung:
+    '<path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2.4a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4zM7.8 8.2a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4zm8.4 0a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4zM12 12c2.87 0 5.2 1.55 5.2 3.46V16H6.8v-.54C6.8 13.55 9.13 12 12 12z"/>',
+  motorola:
+    '<path fill="currentColor" d="M12 1.5A10.5 10.5 0 1012 22.5 10.5 10.5 0 0012 1.5zm-1.36 5.9h2.72l3.55 9.2h-2.55l-.62-1.72h-3.48l-.62 1.72H7.09l3.55-9.2zm1.36 2.36l-1.13 3.16h2.26L12 9.76z"/>',
+  google:
+    '<path fill="currentColor" d="M21.6 12.23c0-.68-.06-1.36-.19-2H12v3.78h5.4a4.62 4.62 0 01-2 3.04v2.5h3.24c1.9-1.75 2.96-4.33 2.96-7.32z"/>' +
+    '<path fill="currentColor" d="M12 22c2.7 0 4.97-.89 6.63-2.42l-3.24-2.5c-.9.6-2.06.95-3.39.95-2.6 0-4.8-1.75-5.59-4.11H3.06v2.58A10 10 0 0012 22z"/>' +
+    '<path fill="currentColor" d="M6.41 13.92a5.99 5.99 0 010-3.84V7.5H3.06a10 10 0 000 8.99l3.35-2.57z"/>' +
+    '<path fill="currentColor" d="M12 5.98c1.47 0 2.79.5 3.83 1.49l2.87-2.87A9.62 9.62 0 0012 2a10 10 0 00-8.94 5.5l3.35 2.58C7.2 7.73 9.4 5.98 12 5.98z"/>'
+};
+
 function brandBadge(brand, size){
   size = size || 40;
-  var initial = brand.charAt(0).toUpperCase();
-  return (
-    '<svg class="brand-badge" width="' + size + '" height="' + size + '" viewBox="0 0 40 40" aria-hidden="true">' +
+  var key = String(brand || "").toLowerCase().trim();
+  var logo = BRAND_LOGO_PATHS[key];
+  var inner;
+  if (logo){
+    // Logo real posicionado e escalado dentro do círculo de 40x40 (viewBox nativo do ícone: 24x24)
+    inner =
       '<circle cx="20" cy="20" r="18.5" class="brand-badge-ring"/>' +
-      '<text x="20" y="26" text-anchor="middle" class="brand-badge-letter">' + initial + '</text>' +
+      '<g transform="translate(9 9) scale(0.917)">' + logo + '</g>';
+  } else {
+    var initial = brand ? brand.charAt(0).toUpperCase() : "?";
+    inner =
+      '<circle cx="20" cy="20" r="18.5" class="brand-badge-ring"/>' +
+      '<text x="20" y="26" text-anchor="middle" class="brand-badge-letter">' + initial + '</text>';
+  }
+  return (
+    '<svg class="brand-badge" width="' + size + '" height="' + size + '" viewBox="0 0 40 40" aria-hidden="true" focusable="false">' +
+      inner +
     '</svg>'
   );
 }
@@ -177,14 +226,15 @@ function placeholderImg(d){
 
 var NEW_MODEL_MARKERS = ["iPhone 17", "Galaxy S25"];
 function isNewModel(model){
-  return NEW_MODEL_MARKERS.some(function(marker){ return model.indexOf(marker) !== -1; });
+  var modelLower = String(model).toLowerCase();
+  return NEW_MODEL_MARKERS.some(function(marker){ return modelLower.indexOf(marker.toLowerCase()) !== -1; });
 }
 
 function renderDevices(){
   if (!deviceGrid || typeof DEVICES === "undefined") return;
-  var q = (deviceSearch.value || "").toLowerCase().trim();
-  var brandFilterVal = deviceBrandFilter.value;
-  var status = deviceStatusFilter.value;
+  var q = (deviceSearch && deviceSearch.value || "").toLowerCase().trim();
+  var brandFilterVal = deviceBrandFilter ? deviceBrandFilter.value : "";
+  var status = deviceStatusFilter ? deviceStatusFilter.value : "";
 
   var filtered = DEVICES.filter(function(d){
     var st = overallStatus(d);
@@ -194,7 +244,7 @@ function renderDevices(){
     return matchesQ && matchesBrand && matchesStatus;
   });
 
-  deviceCount.textContent = filtered.length + " de " + DEVICES.length + " registros";
+  if (deviceCount) deviceCount.textContent = filtered.length + " de " + DEVICES.length + " registros";
 
   if (!filtered.length){
     deviceGrid.innerHTML = '<div class="empty-state">Nenhum celular encontrado. Tente outro termo de busca.</div>';
@@ -237,7 +287,7 @@ function renderDevices(){
   }).join("");
 }
 
-if (deviceBrandFilter && typeof DEVICES !== "undefined"){
+if (deviceGrid && deviceBrandFilter && deviceStatusFilter && deviceSearch && typeof DEVICES !== "undefined"){
   var brands = Array.from(new Set(DEVICES.map(function(d){ return d.brand; }))).sort();
   brands.forEach(function(b){
     var opt = document.createElement("option");
@@ -246,15 +296,16 @@ if (deviceBrandFilter && typeof DEVICES !== "undefined"){
   });
 
   var brandNav = document.getElementById("brandNav");
-  if (brandNav){
+  if (brandNav && !brandNav.dataset.bound){
+    brandNav.dataset.bound = "true";
     brandNav.innerHTML = brands.map(function(b){
       return '<button type="button" class="brand-nav-item" data-brand="' + b + '">' + brandBadge(b, 26) + '<span>' + b + '</span></button>';
     }).join("");
     brandNav.addEventListener("click", function(e){
       var item = e.target.closest(".brand-nav-item");
       if (!item) return;
-      var target = deviceGrid.querySelector('.device-group[data-brand="' + item.dataset.brand + '"]');
-      if (target) target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
+      var targetGroup = deviceGrid.querySelector('.device-group[data-brand="' + item.dataset.brand + '"]');
+      if (targetGroup) targetGroup.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
     });
   }
 
@@ -293,7 +344,7 @@ var doneTasks = loadDoneTasks();
 
 function renderTasks(){
   if (!taskGrid || typeof TASKS === "undefined") return;
-  var q = (taskSearch.value || "").toLowerCase().trim();
+  var q = (taskSearch && taskSearch.value || "").toLowerCase().trim();
 
   var filtered = TASKS.filter(function(t){
     var matchesQ = !q || t.en.toLowerCase().indexOf(q) !== -1 || t.pt.toLowerCase().indexOf(q) !== -1;
@@ -301,7 +352,7 @@ function renderTasks(){
     return matchesQ && matchesCat;
   });
 
-  taskCount.textContent = filtered.length + " de " + TASKS.length + " tarefas";
+  if (taskCount) taskCount.textContent = filtered.length + " de " + TASKS.length + " tarefas";
 
   if (!filtered.length){
     taskGrid.innerHTML = '<div class="empty-state">Nenhuma tarefa encontrada. Tente pesquisar em inglês.</div>';
@@ -330,7 +381,8 @@ function renderTasks(){
 
 function updateCatCounts(){
   if (typeof TASKS === "undefined") return;
-  document.getElementById("count-all").textContent = TASKS.length;
+  var allEl = document.getElementById("count-all");
+  if (allEl) allEl.textContent = TASKS.length;
   ["tidy","laundry","kitchen","misc"].forEach(function(cat){
     var el = document.getElementById("count-" + cat);
     if (el) el.textContent = TASKS.filter(function(t){ return t.cat === cat; }).length;
@@ -340,26 +392,32 @@ function updateCatCounts(){
 if (taskGrid){
   updateCatCounts();
   renderTasks();
-  taskSearch.addEventListener("input", debounce(renderTasks, 120));
-  catChips.addEventListener("click", function(e){
-    var chip = e.target.closest(".chip");
-    if (!chip) return;
-    catChips.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("is-active"); });
-    chip.classList.add("is-active");
-    activeCat = chip.dataset.cat;
-    renderTasks();
-  });
+  if (taskSearch) taskSearch.addEventListener("input", debounce(renderTasks, 120));
+  if (catChips && !catChips.dataset.bound){
+    catChips.dataset.bound = "true";
+    catChips.addEventListener("click", function(e){
+      var chip = e.target.closest(".chip");
+      if (!chip) return;
+      catChips.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("is-active"); });
+      chip.classList.add("is-active");
+      activeCat = chip.dataset.cat || "";
+      renderTasks();
+    });
+  }
   taskGrid.addEventListener("change", function(e){
     var checkbox = e.target.closest(".task-check input");
     if (!checkbox) return;
     var card = checkbox.closest(".task-card");
+    if (!card) return;
     var id = parseInt(card.dataset.taskId, 10);
     if (checkbox.checked) doneTasks.add(id); else doneTasks.delete(id);
     saveDoneTasks(doneTasks);
     card.classList.toggle("is-done", checkbox.checked);
     var badge = card.querySelector(".task-status-badge");
-    badge.textContent = checkbox.checked ? "Concluído" : "Pendente";
-    badge.className = "task-status-badge " + (checkbox.checked ? "done" : "pending");
+    if (badge){
+      badge.textContent = checkbox.checked ? "Concluído" : "Pendente";
+      badge.className = "task-status-badge " + (checkbox.checked ? "done" : "pending");
+    }
   });
 }
 
@@ -374,29 +432,39 @@ function fmtBRL(n){
 }
 
 function updateCalc(){
-  if (!lvl1Range) return;
+  if (!lvl1Range || !lvl2Range || !hoursRange) return;
   var l1 = parseInt(lvl1Range.value, 10);
   var l2 = parseInt(lvl2Range.value, 10);
   var hrs = parseInt(hoursRange.value, 10);
 
-  document.getElementById("lvl1Out").textContent = l1;
-  document.getElementById("lvl2Out").textContent = l2;
-  document.getElementById("hoursOut").textContent = hrs + "h";
+  var lvl1Out = document.getElementById("lvl1Out");
+  var lvl2Out = document.getElementById("lvl2Out");
+  var hoursOut = document.getElementById("hoursOut");
+  if (lvl1Out) lvl1Out.textContent = l1;
+  if (lvl2Out) lvl2Out.textContent = l2;
+  if (hoursOut) hoursOut.textContent = hrs + "h";
 
   var monthly1 = l1 * hrs * WEEKS * RATE_1;
   var monthly2 = l2 * hrs * WEEKS * RATE_2;
   var total = monthly1 + monthly2;
   var maxBar = Math.max(monthly1, monthly2, 1);
 
-  document.getElementById("calcTotal").textContent = fmtBRL(total);
-  document.getElementById("calcSub").textContent = "com " + l1 + " pessoa(s) no nível 1 e " + l2 + " no nível 2";
-  document.getElementById("calcLvl1").textContent = fmtBRL(monthly1);
-  document.getElementById("calcLvl2").textContent = fmtBRL(monthly2);
-  document.getElementById("bar1").style.width = (monthly1 / maxBar * 100) + "%";
-  document.getElementById("bar2").style.width = (monthly2 / maxBar * 100) + "%";
+  var calcTotal = document.getElementById("calcTotal");
+  var calcSub = document.getElementById("calcSub");
+  var calcLvl1 = document.getElementById("calcLvl1");
+  var calcLvl2 = document.getElementById("calcLvl2");
+  var bar1 = document.getElementById("bar1");
+  var bar2 = document.getElementById("bar2");
+
+  if (calcTotal) calcTotal.textContent = fmtBRL(total);
+  if (calcSub) calcSub.textContent = "com " + l1 + " pessoa(s) no nível 1 e " + l2 + " no nível 2";
+  if (calcLvl1) calcLvl1.textContent = fmtBRL(monthly1);
+  if (calcLvl2) calcLvl2.textContent = fmtBRL(monthly2);
+  if (bar1) bar1.style.width = (monthly1 / maxBar * 100) + "%";
+  if (bar2) bar2.style.width = (monthly2 / maxBar * 100) + "%";
 }
 
-if (lvl1Range){
+if (lvl1Range && lvl2Range && hoursRange){
   [lvl1Range, lvl2Range, hoursRange].forEach(function(r){ r.addEventListener("input", updateCalc); });
   updateCalc();
 }
@@ -506,7 +574,7 @@ function initHeroRig(){
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
-  window.addEventListener("resize", resize);
+  window.addEventListener("resize", debounce(resize, 100));
   resize();
 
   var clock = new THREE.Clock();
@@ -577,7 +645,7 @@ function initAngleDemo(){
   );
   phone.position.set(0, 0.55, 0.2);
   mountArm.add(phone);
-  mountArm.rotation.x = -Math.PI / 4; 
+  mountArm.rotation.x = -Math.PI / 4;
 
   var edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(phone.geometry),
@@ -605,7 +673,7 @@ function initAngleDemo(){
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
-  window.addEventListener("resize", resize);
+  window.addEventListener("resize", debounce(resize, 100));
   resize();
 
   var clock = new THREE.Clock();
@@ -653,7 +721,8 @@ function initTiltCards(){
   }, true);
 }
 
-document.getElementById("year") && (document.getElementById("year").textContent = new Date().getFullYear());
+var yearEl = document.getElementById("year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 initHeroRig();
 initAngleDemo();
 initTiltCards();
@@ -688,11 +757,11 @@ var HARDWARE_FINGERPRINT_MAP = {
   "414_896_2": "iPhone 11", // Cobre XR
   "414_896_3": "iPhone 11 Pro Max", // Cobre XS Max
   "375_667_2": "iPhone SE", // Cobre 2nd e 3rd gen, iPhone 8, 7, 6s
-  "428_926_2": "iPhone 14 Plus", 
-  
+  "428_926_2": "iPhone 14 Plus",
+
   // Alguns Androids Flagships Comuns (Fallback extra)
   "360_800_3": "Galaxy S22",
-  "384_854_3": "Galaxy S23 Ultra", 
+  "384_854_3": "Galaxy S23 Ultra",
   "412_915_2.625": "Pixel 7"
 };
 
@@ -717,7 +786,7 @@ function getHardwareFingerprint() {
   return w + "_" + h + "_" + ratio;
 }
 
-// NOVO — helper de normalização usado pelo matching flexível de findDeviceMatch.
+// Helper de normalização usado pelo matching flexível de findDeviceMatch.
 // Baixa a caixa e remove vírgulas/pontos, para que "iPhone 15 Pro Max" e
 // "iPhone 15, 15 Pro, 15 Pro Max" virem strings comparáveis por palavra-chave.
 function normalizeModelString(str){
@@ -728,10 +797,14 @@ function normalizeModelString(str){
     .trim();
 }
 
-// 5. Função Master de Identificação (CORRIGIDA — matching flexível por palavras-chave)
+// 5. Função Master de Identificação — matching case-insensitive e flexível por
+// palavras-chave. Toda comparação usa .toLowerCase() + .includes() (sem
+// diferenciar maiúsculas/minúsculas), tanto na leitura do user-agent quanto
+// no cruzamento com o array DEVICES.
 function findDeviceMatch(ua, brand){
   if (typeof DEVICES === "undefined") return null;
 
+  var uaLower = String(ua || "").toLowerCase();
   var matchedModelName = null;
   var gpu = getGPUInfo().toLowerCase();
 
@@ -739,17 +812,17 @@ function findDeviceMatch(ua, brand){
   var fingerprint = getHardwareFingerprint();
   if (HARDWARE_FINGERPRINT_MAP[fingerprint]) {
     // Cruza a informação extra da GPU se for um dispositivo Apple para evitar falsos positivos
-    if (brand === "apple" || gpu.indexOf("apple") !== -1) {
+    if (brand === "apple" || gpu.includes("apple")) {
        matchedModelName = HARDWARE_FINGERPRINT_MAP[fingerprint];
     } else if (brand !== "apple") {
        matchedModelName = HARDWARE_FINGERPRINT_MAP[fingerprint];
     }
   }
 
-  // B. Tentativa Secundária: Fallback via Regex User-Agent (Padrão ouro para Android)
+  // B. Tentativa Secundária: Fallback via User-Agent (case-insensitive, padrão ouro para Android)
   if (!matchedModelName && (brand === "samsung" || brand === "google" || brand === "motorola")){
     for (var code in ANDROID_MODEL_CODE_MAP){
-      if (ua.indexOf(code) !== -1){
+      if (uaLower.includes(code.toLowerCase())){
         matchedModelName = ANDROID_MODEL_CODE_MAP[code];
         break;
       }
@@ -757,7 +830,7 @@ function findDeviceMatch(ua, brand){
   }
 
   // C. Varredura no array DEVICES local — matching flexível por palavras-chave
-  // em vez de .indexOf() rígido. Resolve casos como "iPhone 15 Pro Max" detectado no
+  // em vez de comparação rígida. Resolve casos como "iPhone 15 Pro Max" detectado no
   // hardware batendo com "iPhone 15, 15 Pro, 15 Pro Max" cadastrado em DEVICES.
   if (matchedModelName) {
     var normalizedTarget = normalizeModelString(matchedModelName);
@@ -767,7 +840,7 @@ function findDeviceMatch(ua, brand){
     // no texto do modelo cadastrado (ordem não importa, maiúsculas ignoradas).
     var foundByModel = DEVICES.filter(function(d){
       var modelNorm = normalizeModelString(d.model);
-      return keywords.every(function(kw){ return modelNorm.indexOf(kw) !== -1; });
+      return keywords.every(function(kw){ return modelNorm.includes(kw); });
     });
 
     // Passagem 2 (flexível): se a estrita não achou nada, aceita quando pelo menos
@@ -775,7 +848,7 @@ function findDeviceMatch(ua, brand){
     if (!foundByModel.length && keywords.length > 1){
       foundByModel = DEVICES.filter(function(d){
         var modelNorm = normalizeModelString(d.model);
-        var hits = keywords.filter(function(kw){ return modelNorm.indexOf(kw) !== -1; }).length;
+        var hits = keywords.filter(function(kw){ return modelNorm.includes(kw); }).length;
         return hits >= keywords.length - 1;
       });
     }
@@ -783,7 +856,7 @@ function findDeviceMatch(ua, brand){
     if (foundByModel.length) return foundByModel; // retorna um ARRAY de compatíveis
   }
 
-  return null; 
+  return null;
 }
 
 function renderDeviceMatchBanner(brand, ua){
@@ -794,14 +867,14 @@ function renderDeviceMatchBanner(brand, ua){
   var BRAND_LABEL = { apple: "Apple", samsung: "Samsung", motorola: "Motorola", google: "Google" };
 
   var matchResult = findDeviceMatch(ua, brand);
-  // findDeviceMatch agora pode retornar um array de compatíveis — pega o primeiro item.
+  // findDeviceMatch pode retornar um array de compatíveis — seleção estável: sempre
+  // usa o primeiro item da lista (mesma ordem do array DEVICES).
   var match = Array.isArray(matchResult) ? matchResult[0] : matchResult;
 
   if (match){
-    var st = overallStatus(match); // Assume que overallStatus e STATUS_LABEL continuam globais/acessíveis ou definidos antes
+    var st = overallStatus(match);
     var label = (typeof STATUS_LABEL !== "undefined" && STATUS_LABEL[st]) ? STATUS_LABEL[st] : st;
-    
-    // Regra 4 Cumprida: Mensagem exata injetada no DOM.
+
     banner.className = "device-match-banner status-" + st;
     if (st === "ok") {
         banner.innerHTML = "<strong>O modelo " + match.model + " é compatível!</strong><br>" + match.note;
@@ -809,15 +882,12 @@ function renderDeviceMatchBanner(brand, ua){
         banner.innerHTML = "<strong>Detectamos: " + match.brand + " " + match.model + "</strong><br>Status atual: " + label + ". " + match.note;
     }
 
-    // Regra 4 Cumprida: Preenchimento automático do input de busca que despacha o evento input
     if (searchInput) {
         searchInput.value = match.model;
         searchInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
   } else if (brand !== "generic"){
-    // Marca identificada, mas sem modelo exato cruzado no array DEVICES.
-    // Mensagem positiva/comercial em vez do texto de erro anterior.
     var brandLabel = BRAND_LABEL[brand] || (brand.charAt(0).toUpperCase() + brand.slice(1));
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML =
@@ -835,22 +905,67 @@ function renderDeviceMatchBanner(brand, ua){
   }, 900);
 }
 
+/* ============================================================
+   Hero dinâmico — estabilizado entre Desktop e Mobile.
+   Toda manipulação de DOM é protegida por verificação de existência
+   do elemento, e nenhum seletor exclusivo de Mobile roda em Desktop
+   (e vice-versa).
+   ============================================================ */
+var qrLibLoading = false;
+
+function renderQRCode(){
+  var qrContainer = document.getElementById("qrContainer");
+  if (!qrContainer || typeof QRCode === "undefined") return;
+  qrContainer.innerHTML = "";
+  new QRCode(qrContainer, {
+    text: window.__qrUrl || window.location.href,
+    width: 265,
+    height: 265,
+    colorDark: "#090A14",
+    colorLight: "#FFFFFF"
+  });
+}
+
+function loadQRCodeLib(){
+  if (typeof QRCode !== "undefined"){
+    renderQRCode();
+    return;
+  }
+  if (qrLibLoading) return;
+  qrLibLoading = true;
+
+  var qrScript = document.createElement('script');
+  qrScript.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+  qrScript.onload = function(){
+    qrLibLoading = false;
+    renderQRCode();
+  };
+  qrScript.onerror = function(){
+    qrLibLoading = false;
+    var qrContainer = document.getElementById("qrContainer");
+    if (qrContainer) qrContainer.textContent = "Não foi possível carregar o QR Code agora. Recarregue a página.";
+  };
+  document.head.appendChild(qrScript);
+}
+
 function initSmartHero() {
-  const heroDynamic = document.getElementById('heroDynamic');
+  var heroDynamic = document.getElementById('heroDynamic');
   if (!heroDynamic) return;
 
-  const ua = navigator.userAgent || '';
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || 
-                   (window.maxTouchPoints && window.maxTouchPoints > 2) || 
-                   window.innerWidth < 768; // Refinado para considerar iPads modernos e afins
+  var ua = navigator.userAgent || '';
+  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+                 (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
+                 window.innerWidth < 768; // Refinado para considerar iPads modernos e afins
 
-  let brand = 'generic';
+  var brand = 'generic';
 
   if (isMobile) {
-    if (/iPhone|iPad|iPod|Mac/.test(ua) && window.maxTouchPoints > 1) brand = 'apple';
-    else if (/Samsung|SM-/.test(ua)) brand = 'samsung';
-    else if (/Motorola|XT|Moto/.test(ua)) brand = 'motorola';
-    else if (/Pixel|Nexus/.test(ua)) brand = 'google';
+    // Detecção case-insensitive por marca; padrões restritos para evitar falsos
+    // positivos (ex: "xt" isolado casava com qualquer string contendo essas letras).
+    if (/iphone|ipad|ipod|mac/i.test(ua) && navigator.maxTouchPoints > 1) brand = 'apple';
+    else if (/samsung|sm-/i.test(ua)) brand = 'samsung';
+    else if (/motorola|\bmoto\b|\bxt\d{3,4}\b/i.test(ua)) brand = 'motorola';
+    else if (/pixel|nexus/i.test(ua)) brand = 'google';
   }
 
   var elDevicesOk = document.getElementById('statDevicesOk');
@@ -858,35 +973,34 @@ function initSmartHero() {
   var currentDevicesOk = elDevicesOk ? elDevicesOk.textContent : '13';
   var currentTasksCount = elTasks ? elTasks.textContent : '84';
 
-  let html = '';
+  var html = '';
 
   if (!isMobile) {
     var qrUrl = window.location.href.split('?')[0] + '?src=qr';
-    html = `
-      <p class="eyebrow">Recomendado: acesse pelo celular</p>
-      <h1 class="hero-title">Veja se o <span class="accent-serif">seu celular</span> é compatível</h1>
-      <div class="desktop-hint-banner">
-        A gravação para o MINUTE é feita pela câmera do celular. Você pode continuar
-        navegando por aqui normalmente, ou escanear o QR Code abaixo para abrir este
-        guia no seu celular e já ver o status do seu aparelho.
-      </div>
-      <p class="hero-sub" style="max-width:520px; margin:1.2rem auto 2rem;">
-        Aponte a câmera do celular para o QR Code abaixo para abrir o guia lá.
-      </p>
-      <div class="qr-container" id="qrContainer"></div>
-      <div class="hero-stats" style="margin-top: 2.8rem; opacity: 0.9;">
-        <div class="stat"><span class="stat-num" id="statDevicesOk">${currentDevicesOk}</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
-        <div class="stat"><span class="stat-num" id="statTasks">${currentTasksCount}</span><span class="stat-label">tarefas traduzidas</span></div>
-        <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
-      </div>
-    `;
+    html =
+      '<p class="eyebrow">Recomendado: acesse pelo celular</p>' +
+      '<h1 class="hero-title">Veja se o <span class="accent-serif">seu celular</span> é compatível</h1>' +
+      '<div class="desktop-hint-banner">' +
+        'A gravação para o MINUTE é feita pela câmera do celular. Você pode continuar ' +
+        'navegando por aqui normalmente, ou escanear o QR Code abaixo para abrir este ' +
+        'guia no seu celular e já ver o status do seu aparelho.' +
+      '</div>' +
+      '<p class="hero-sub" style="max-width:520px; margin:1.2rem auto 2rem;">' +
+        'Aponte a câmera do celular para o QR Code abaixo para abrir o guia lá.' +
+      '</p>' +
+      '<div class="qr-container" id="qrContainer"></div>' +
+      '<div class="hero-stats" style="margin-top: 2.8rem; opacity: 0.9;">' +
+        '<div class="stat"><span class="stat-num" id="statDevicesOk">' + currentDevicesOk + '</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>' +
+        '<div class="stat"><span class="stat-num" id="statTasks">' + currentTasksCount + '</span><span class="stat-label">tarefas traduzidas</span></div>' +
+        '<div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>' +
+      '</div>';
     window.__qrUrl = qrUrl;
   } else {
-    let title = 'Grave sua rotina.<br><span class="accent-serif">Deixe nítido</span> o que importa.';
-    let sub = 'Confira se o seu celular grava no MINUTE, encontre a tradução exata de cada tarefa e aprenda o ângulo de 45° que a HUB recomenda.';
-    let eyebrow = 'Guia independente · HUB &amp; MINUTE';
+    var title = 'Grave sua rotina.<br><span class="accent-serif">Deixe nítido</span> o que importa.';
+    var sub = 'Confira se o seu celular grava no MINUTE, encontre a tradução exata de cada tarefa e aprenda o ângulo de 45° que a HUB recomenda.';
+    var eyebrow = 'Guia independente · HUB &amp; MINUTE';
 
-    switch(brand) {
+    switch (brand) {
       case 'apple':
         title = 'Guia para o seu <span class="accent-serif">iPhone</span>';
         sub = 'Veja logo abaixo o status de compatibilidade da sua linha de iPhone no MINUTE.';
@@ -909,27 +1023,28 @@ function initSmartHero() {
         break;
     }
 
-    html = `
-      <p class="eyebrow">${eyebrow}</p>
-      <h1 class="hero-title">${title}</h1>
-      <p class="hero-sub">${sub}</p>
-      <div class="hero-actions">
-        <a class="btn btn-cta btn-lg" href="https://ai.hub.xyz/r/HHZ3V5GH" target="_blank" rel="noopener">Criar minha conta na HUB</a>
-        <a class="btn btn-ghost btn-lg" href="#celulares">Ver compatibilidade →</a>
-      </div>
-      <div class="hero-stats">
-        <div class="stat"><span class="stat-num" id="statDevicesOk">${currentDevicesOk}</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
-        <div class="stat"><span class="stat-num" id="statTasks">${currentTasksCount}</span><span class="stat-label">tarefas traduzidas</span></div>
-        <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
-      </div>
-    `;
+    html =
+      '<p class="eyebrow">' + eyebrow + '</p>' +
+      '<h1 class="hero-title">' + title + '</h1>' +
+      '<p class="hero-sub">' + sub + '</p>' +
+      '<div class="hero-actions">' +
+        '<a class="btn btn-cta btn-lg" href="https://ai.hub.xyz/r/HHZ3V5GH" target="_blank" rel="noopener">Criar minha conta na HUB</a>' +
+        '<a class="btn btn-ghost btn-lg" href="#celulares">Ver compatibilidade →</a>' +
+      '</div>' +
+      '<div class="hero-stats">' +
+        '<div class="stat"><span class="stat-num" id="statDevicesOk">' + currentDevicesOk + '</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>' +
+        '<div class="stat"><span class="stat-num" id="statTasks">' + currentTasksCount + '</span><span class="stat-label">tarefas traduzidas</span></div>' +
+        '<div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>' +
+      '</div>';
   }
 
   heroDynamic.innerHTML = html;
   heroDynamic.classList.add('visible');
 
+  // Seletores exclusivos de Mobile só rodam em Mobile.
   if (isMobile) {
-    document.querySelector('.hero').classList.add(`hero-brand-${brand}`);
+    var heroEl = document.querySelector('.hero');
+    if (heroEl) heroEl.classList.add('hero-brand-' + brand);
     renderDeviceMatchBanner(brand, ua);
   }
 
@@ -937,27 +1052,15 @@ function initSmartHero() {
     window.__setupStatCountUp();
   }
 
+  // Seletor exclusivo de Desktop (QR Code) só roda em Desktop.
   if (!isMobile) {
-    const qrScript = document.createElement('script');
-    qrScript.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
-    qrScript.onload = () => {
-      var qrContainer = document.getElementById("qrContainer");
-      if (qrContainer) {
-        new QRCode(qrContainer, {
-          text: window.__qrUrl || window.location.href,
-          width: 265,
-          height: 265,
-          colorDark: "#090A14",
-          colorLight: "#FFFFFF"
-        });
-      }
-    };
-    qrScript.onerror = () => {
-      var qrContainer = document.getElementById("qrContainer");
-      if (qrContainer) qrContainer.textContent = "Não foi possível carregar o QR Code agora. Recarregue a página.";
-    };
-    document.head.appendChild(qrScript);
+    loadQRCodeLib();
   }
 }
 
-document.addEventListener('DOMContentLoaded', initSmartHero);
+if (document.readyState === "loading"){
+  document.addEventListener('DOMContentLoaded', initSmartHero);
+} else {
+  // DOM já pronto (script carregado tarde/async) — evita perder o evento.
+  initSmartHero();
+}
