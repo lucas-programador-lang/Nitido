@@ -62,36 +62,47 @@ if ("IntersectionObserver" in window && !prefersReducedMotion){
   revealEls.forEach(function(el){ el.classList.add("is-visible"); });
 }
 
-/* ---------------- Hero stat count-up ---------------- */
-var statEls = document.querySelectorAll(".stat-num");
-if (statEls.length && !prefersReducedMotion && "IntersectionObserver" in window){
-  var statIO = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      if (!entry.isIntersecting) return;
-      statIO.unobserve(entry.target);
-      var el = entry.target;
-      var raw = el.textContent.trim();
-      var match = raw.match(/(-?[\d.,]+)/);
-      if (!match) return; // no numeric portion (e.g. "24/7") — leave as-is
-      var prefix = raw.slice(0, match.index);
-      var suffix = raw.slice(match.index + match[0].length);
-      var target = parseFloat(match[0].replace(/\./g, "").replace(",", "."));
-      if (isNaN(target)) return;
-      var duration = 1100, start = null;
-      function step(ts){
-        if (start === null) start = ts;
-        var progress = Math.min((ts - start) / duration, 1);
-        var eased = 1 - Math.pow(1 - progress, 3);
-        var current = Math.round(target * eased);
-        el.textContent = prefix + current.toLocaleString("pt-BR") + suffix;
-        if (progress < 1) requestAnimationFrame(step);
-        else el.textContent = raw;
-      }
-      requestAnimationFrame(step);
-    });
-  }, { threshold: 0.4 });
-  statEls.forEach(function(el){ statIO.observe(el); });
+/* ---------------- Hero stat count-up ----------------
+   Wrapped in a named function and exposed on window so it can be
+   re-run by initSmartHero() below: initSmartHero replaces
+   #heroDynamic's innerHTML (to show the device-specific hero),
+   which detaches the original .stat-num nodes this observer would
+   otherwise be watching, silently killing the count-up animation.
+   Re-running this after the swap re-attaches the observer to the
+   freshly created .stat-num nodes. */
+function setupStatCountUp(){
+  var statEls = document.querySelectorAll(".stat-num");
+  if (statEls.length && !prefersReducedMotion && "IntersectionObserver" in window){
+    var statIO = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (!entry.isIntersecting) return;
+        statIO.unobserve(entry.target);
+        var el = entry.target;
+        var raw = el.textContent.trim();
+        var match = raw.match(/(-?[\d.,]+)/);
+        if (!match) return; // no numeric portion (e.g. "24/7") — leave as-is
+        var prefix = raw.slice(0, match.index);
+        var suffix = raw.slice(match.index + match[0].length);
+        var target = parseFloat(match[0].replace(/\./g, "").replace(",", "."));
+        if (isNaN(target)) return;
+        var duration = 1100, start = null;
+        function step(ts){
+          if (start === null) start = ts;
+          var progress = Math.min((ts - start) / duration, 1);
+          var eased = 1 - Math.pow(1 - progress, 3);
+          var current = Math.round(target * eased);
+          el.textContent = prefix + current.toLocaleString("pt-BR") + suffix;
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = raw;
+        }
+        requestAnimationFrame(step);
+      });
+    }, { threshold: 0.4 });
+    statEls.forEach(function(el){ statIO.observe(el); });
+  }
 }
+setupStatCountUp();
+window.__setupStatCountUp = setupStatCountUp;
 
 /* ---------------- FAQ render + accordion ---------------- */
 var faqList = document.getElementById("faqList");
@@ -176,7 +187,7 @@ function brandBadge(brand, size){
 // would just 404). Swap the src for a real photo per-model when you have one.
 function placeholderImg(d){
   var label = encodeURIComponent(d.brand + "\n" + d.model.split(",")[0].split(" e ")[0]);
-  var src = "https://placehold.co/480x320/161B22/6B7280?font=inter&text=" + label;
+  var src = "https://placehold.co/480x320/161A30/6E6C8C?font=inter&text=" + label;
   return '<img class="device-photo" src="' + src + '" alt="Imagem ilustrativa — ' + d.brand + ' ' + d.model + '" loading="lazy" width="480" height="320">';
 }
 
@@ -430,11 +441,11 @@ function initHeroRig(){
   var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
   camera.position.set(0, 1.1, 7.5);
 
-  var goldColor = 0xC9A227;
-  var tealColor = 0x1FB6A6;
+  var goldColor = 0xD3943D;
+  var tealColor = 0x8B7FFF;
 
   // Floor grid, faint
-  var grid = new THREE.GridHelper(30, 30, 0x2a2f38, 0x1a1e24);
+  var grid = new THREE.GridHelper(30, 30, 0x282a3c, 0x141626);
   grid.position.y = -2.4;
   scene.add(grid);
 
@@ -443,7 +454,7 @@ function initHeroRig(){
   scene.add(rigGroup);
 
   var phoneGeo = new THREE.BoxGeometry(1.4, 2.9, 0.16);
-  var phoneMat = new THREE.MeshStandardMaterial({ color: 0x14161b, metalness: 0.6, roughness: 0.25, emissive: 0x05070a });
+  var phoneMat = new THREE.MeshStandardMaterial({ color: 0x13141f, metalness: 0.6, roughness: 0.25, emissive: 0x06070d });
   var phone = new THREE.Mesh(phoneGeo, phoneMat);
   rigGroup.add(phone);
 
@@ -491,12 +502,12 @@ function initHeroRig(){
   }
   var particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  var particleMat = new THREE.PointsMaterial({ color: 0xC9A227, size: 0.02, transparent: true, opacity: 0.5 });
+  var particleMat = new THREE.PointsMaterial({ color: 0xD3943D, size: 0.02, transparent: true, opacity: 0.5 });
   var particles = new THREE.Points(particleGeo, particleMat);
   scene.add(particles);
 
   // Lights
-  scene.add(new THREE.AmbientLight(0x445566, 0.9));
+  scene.add(new THREE.AmbientLight(0x4a4f6b, 0.9));
   var key = new THREE.PointLight(goldColor, 3.2, 20);
   key.position.set(3, 3, 4);
   scene.add(key);
@@ -578,7 +589,7 @@ function initAngleDemo(){
 
   var head = new THREE.Mesh(
     new THREE.SphereGeometry(1, 24, 24),
-    new THREE.MeshStandardMaterial({ color: 0x1c2028, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({ color: 0x191d2c, roughness: 0.8 })
   );
   scene.add(head);
 
@@ -588,7 +599,7 @@ function initAngleDemo(){
 
   var phone = new THREE.Mesh(
     new THREE.BoxGeometry(0.5, 1.0, 0.06),
-    new THREE.MeshStandardMaterial({ color: 0x0e1014, metalness: 0.7, roughness: 0.2 })
+    new THREE.MeshStandardMaterial({ color: 0x0d0e18, metalness: 0.7, roughness: 0.2 })
   );
   phone.position.set(0, 0.55, 0.2);
   mountArm.add(phone);
@@ -596,7 +607,7 @@ function initAngleDemo(){
 
   var edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(phone.geometry),
-    new THREE.LineBasicMaterial({ color: 0xC9A227 })
+    new THREE.LineBasicMaterial({ color: 0xD3943D })
   );
   phone.add(edges);
 
@@ -604,13 +615,13 @@ function initAngleDemo(){
   var arcCurve = new THREE.EllipseCurve(0, 0, 1.3, 1.3, 0, Math.PI/4, false, 0);
   var arcPoints = arcCurve.getPoints(30);
   var arcGeo = new THREE.BufferGeometry().setFromPoints(arcPoints.map(function(p){ return new THREE.Vector3(0, p.y, p.x); }));
-  var arc = new THREE.Line(arcGeo, new THREE.LineDashedMaterial({ color: 0x1FB6A6, dashSize: 0.06, gapSize: 0.05 }));
+  var arc = new THREE.Line(arcGeo, new THREE.LineDashedMaterial({ color: 0x8B7FFF, dashSize: 0.06, gapSize: 0.05 }));
   arc.computeLineDistances();
   arc.position.set(0, 0.75, 0.75);
   scene.add(arc);
 
-  scene.add(new THREE.AmbientLight(0x556677, 1.1));
-  var l = new THREE.PointLight(0xC9A227, 2.6, 15);
+  scene.add(new THREE.AmbientLight(0x5a5c80, 1.1));
+  var l = new THREE.PointLight(0xD3943D, 2.6, 15);
   l.position.set(3, 3, 4);
   scene.add(l);
 
@@ -703,12 +714,21 @@ function initSmartHero() {
     else if (/Pixel|Nexus/.test(ua)) brand = 'google';
   }
 
+  // Reuse the counts script.js already derived from DEVICES/TASKS (written
+  // into these same elements at load time) instead of hand-typing "13"/"84"
+  // again here — hand-typed numbers below would silently drift out of sync
+  // with data.js the next time the device/task list changes.
+  var elDevicesOk = document.getElementById('statDevicesOk');
+  var elTasks = document.getElementById('statTasks');
+  var currentDevicesOk = elDevicesOk ? elDevicesOk.textContent : '13';
+  var currentTasksCount = elTasks ? elTasks.textContent : '84';
+
   let html = '';
 
   if (!isMobile) {
     // === MODO DESKTOP ===
     html = `
-      <p class="eyebrow" style="color:#C9A227;">EXCLUSIVO PARA CELULAR</p>
+      <p class="eyebrow" style="color:#F0BE72;">EXCLUSIVO PARA CELULAR</p>
       <h1 class="hero-title">Acesso Ultra Premium</h1>
       <p class="hero-sub" style="max-width:520px; margin:1.8rem auto 2.4rem;">
         Acesse este site usando a câmera do seu celular para detectar a compatibilidade 
@@ -716,8 +736,8 @@ function initSmartHero() {
       </p>
       <div class="qr-container" id="qrContainer"></div>
       <div class="hero-stats" style="margin-top: 2.8rem; opacity: 0.9;">
-        <div class="stat"><span class="stat-num" id="statDevicesOk">13</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
-        <div class="stat"><span class="stat-num" id="statTasks">84</span><span class="stat-label">tarefas traduzidas</span></div>
+        <div class="stat"><span class="stat-num" id="statDevicesOk">${currentDevicesOk}</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
+        <div class="stat"><span class="stat-num" id="statTasks">${currentTasksCount}</span><span class="stat-label">tarefas traduzidas</span></div>
         <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
       </div>
     `;
@@ -759,8 +779,8 @@ function initSmartHero() {
         <a class="btn btn-ghost btn-lg" href="#celulares">Ver compatibilidade →</a>
       </div>
       <div class="hero-stats">
-        <div class="stat"><span class="stat-num" id="statDevicesOk">13</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
-        <div class="stat"><span class="stat-num" id="statTasks">84</span><span class="stat-label">tarefas traduzidas</span></div>
+        <div class="stat"><span class="stat-num" id="statDevicesOk">${currentDevicesOk}</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
+        <div class="stat"><span class="stat-num" id="statTasks">${currentTasksCount}</span><span class="stat-label">tarefas traduzidas</span></div>
         <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
       </div>
     `;
@@ -774,6 +794,13 @@ function initSmartHero() {
     document.querySelector('.hero').classList.add(`hero-brand-${brand}`);
   }
 
+  // Re-attach the count-up observer to the .stat-num nodes just created
+  // above (the innerHTML swap detached the ones the IIFE originally
+  // observed at load, which silently stopped the animation).
+  if (typeof window.__setupStatCountUp === 'function') {
+    window.__setupStatCountUp();
+  }
+
   // Gera QR Code no desktop
   if (!isMobile) {
     const qrScript = document.createElement('script');
@@ -783,7 +810,7 @@ function initSmartHero() {
         text: window.location.href,
         width: 265,
         height: 265,
-        colorDark: "#0A0C0F",
+        colorDark: "#090A14",
         colorLight: "#FFFFFF"
       });
     };
