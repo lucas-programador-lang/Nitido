@@ -681,3 +681,115 @@ initAngleDemo();
 initTiltCards();
 
 })();
+
+
+/* =============================================
+   PERSONALIZAÇÃO INTELIGENTE - BANNER PRINCIPAL
+   ============================================= */
+function initSmartHero() {
+  const heroDynamic = document.getElementById('heroDynamic');
+  if (!heroDynamic) return;
+
+  const ua = navigator.userAgent || '';
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || 
+                   window.innerWidth < 768;
+
+  let brand = 'generic';
+
+  if (isMobile) {
+    if (/iPhone|iPad|iPod/.test(ua)) brand = 'apple';
+    else if (/Samsung|SM-/.test(ua)) brand = 'samsung';
+    else if (/Motorola|XT|Moto/.test(ua)) brand = 'motorola';
+    else if (/Pixel|Nexus/.test(ua)) brand = 'google';
+  }
+
+  let html = '';
+
+  if (!isMobile) {
+    // === MODO DESKTOP ===
+    html = `
+      <p class="eyebrow" style="color:#C9A227;">EXCLUSIVO PARA CELULAR</p>
+      <h1 class="hero-title">Acesso Ultra Premium</h1>
+      <p class="hero-sub" style="max-width:520px; margin:1.8rem auto 2.4rem;">
+        Acesse este site usando a câmera do seu celular para detectar a compatibilidade 
+        do seu aparelho e liberar seu acesso Ultra Premium.
+      </p>
+      <div class="qr-container" id="qrContainer"></div>
+      <div class="hero-stats" style="margin-top: 2.8rem; opacity: 0.9;">
+        <div class="stat"><span class="stat-num" id="statDevicesOk">13</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
+        <div class="stat"><span class="stat-num" id="statTasks">84</span><span class="stat-label">tarefas traduzidas</span></div>
+        <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
+      </div>
+    `;
+  } else {
+    // === MODO MOBILE ===
+    let title = 'Grave sua rotina.<br><span class="accent-serif">Deixe nítido</span> o que importa.';
+    let sub = 'Confira se o seu celular grava no MINUTE, encontre a tradução exata de cada tarefa e aprenda o ângulo de 45° que a HUB recomenda.';
+    let eyebrow = 'Guia independente · HUB &amp; MINUTE';
+
+    switch(brand) {
+      case 'apple':
+        title = 'Proteção Ultra Premium para o seu <span class="accent-serif">iPhone</span>';
+        sub = 'Capinhas, películas, suportes e acessórios Apple compatíveis com o MINUTE.';
+        eyebrow = 'Detectado: iPhone';
+        break;
+      case 'samsung':
+        title = 'Galaxy Ultra Experience';
+        sub = 'Acessórios premium para linha Galaxy — compatibilidade confirmada no MINUTE.';
+        eyebrow = 'Detectado: Samsung';
+        break;
+      case 'motorola':
+        title = 'Motorola Ready';
+        sub = 'Suportes e acessórios otimizados para sua Motorola no MINUTE.';
+        eyebrow = 'Detectado: Motorola';
+        break;
+      case 'google':
+        title = 'Pixel Perfect';
+        sub = 'Acessórios para Google Pixel com gravação estável no MINUTE.';
+        eyebrow = 'Detectado: Google Pixel';
+        break;
+    }
+
+    html = `
+      <p class="eyebrow">${eyebrow}</p>
+      <h1 class="hero-title">${title}</h1>
+      <p class="hero-sub">${sub}</p>
+      <div class="hero-actions">
+        <a class="btn btn-cta btn-lg" href="https://ai.hub.xyz/r/HHZ3V5GH" target="_blank" rel="noopener">Criar minha conta na HUB</a>
+        <a class="btn btn-ghost btn-lg" href="#celulares">Ver compatibilidade →</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num" id="statDevicesOk">13</span><span class="stat-label">celulares compatíveis com o MINUTE</span></div>
+        <div class="stat"><span class="stat-num" id="statTasks">84</span><span class="stat-label">tarefas traduzidas</span></div>
+        <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
+      </div>
+    `;
+  }
+
+  heroDynamic.innerHTML = html;
+  heroDynamic.classList.add('visible');
+
+  // Aplica cor da marca no mobile
+  if (isMobile) {
+    document.querySelector('.hero').classList.add(`hero-brand-${brand}`);
+  }
+
+  // Gera QR Code no desktop
+  if (!isMobile) {
+    const qrScript = document.createElement('script');
+    qrScript.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+    qrScript.onload = () => {
+      new QRCode(document.getElementById("qrContainer"), {
+        text: window.location.href,
+        width: 265,
+        height: 265,
+        colorDark: "#0A0C0F",
+        colorLight: "#FFFFFF"
+      });
+    };
+    document.head.appendChild(qrScript);
+  }
+}
+
+// Executa
+document.addEventListener('DOMContentLoaded', initSmartHero);
