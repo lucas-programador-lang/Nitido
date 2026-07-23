@@ -16,70 +16,6 @@ function debounce(fn, wait){
   };
 }
 
-function esc(str){
-  return String(str).replace(/[&<>"']/g, function(c){
-    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
-  });
-}
-
-/* ============================================================
-   Brand marks — simple original monogram badges (not the brands'
-   official trademarked logos), colour-coded so the device list
-   reads at a glance.
-   ============================================================ */
-var BRAND_META = {
-  "Apple":    { letter: "A", color: "var(--silver)" },
-  "Samsung":  { letter: "S", color: "var(--blue)" },
-  "Google":   { letter: "G", color: "var(--green)" },
-  "Motorola": { letter: "M", color: "var(--red)" }
-};
-
-function brandBadgeSvg(brand, size){
-  size = size || 34;
-  var meta = BRAND_META[brand] || { letter: (brand || "?").charAt(0).toUpperCase(), color: "var(--ink-dim)" };
-  return (
-    '<svg class="brand-badge" width="' + size + '" height="' + size + '" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-      '<rect x="1" y="1" width="32" height="32" rx="9" fill="#12151a" stroke="' + meta.color + '" stroke-width="1.4" opacity="0.95"/>' +
-      '<text x="17" y="22.5" text-anchor="middle" font-family="\'JetBrains Mono\', monospace" font-size="14" font-weight="700" fill="' + meta.color + '">' + esc(meta.letter) + '</text>' +
-    '</svg>'
-  );
-}
-
-/* Small phone illustration used on each device card. A flat, generic
-   handset silhouette (no real product photo) whose screen glow and
-   camera dot pick up the compatibility status colour. */
-function phoneIllustrationSvg(status){
-  var st = "st-" + status;
-  return (
-    '<svg class="phone-illustration" width="40" height="68" viewBox="0 0 40 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-      '<rect x="1.5" y="1.5" width="37" height="65" rx="8" fill="#14161b" stroke="rgba(233,229,220,0.18)" stroke-width="1.3"/>' +
-      '<rect class="phone-glow ' + st + '" x="6.5" y="7.5" width="27" height="46" rx="3"/>' +
-      '<circle class="phone-lens ' + st + '" cx="20" cy="60.5" r="3"/>' +
-    '</svg>'
-  );
-}
-
-/* ============================================================
-   Category icons — simple original line icons for the task
-   library (broom / laundry basket / fork+knife / wrench).
-   ============================================================ */
-var CAT_ICON_PATHS = {
-  tidy: '<line x1="16.5" y1="3.5" x2="8.5" y2="13.5"/><path d="M8.5 13.5 L4.5 20 M8.5 13.5 L6.5 21 M8.5 13.5 L9 21.2 M8.5 13.5 L11.3 20.2"/>',
-  laundry: '<path d="M4.5 9.5 L6.3 20.5 H17.7 L19.5 9.5"/><line x1="4.5" y1="9.5" x2="19.5" y2="9.5"/><line x1="9.3" y1="9.5" x2="10.1" y2="20.5"/><line x1="14.7" y1="9.5" x2="13.9" y2="20.5"/>',
-  kitchen: '<path d="M7 3 V10.5 M5.3 3 V7.8 a1.7 1.7 0 0 0 1.7 1.7 a1.7 1.7 0 0 0 1.7-1.7 V3"/><line x1="7" y1="10.5" x2="7" y2="21"/><path d="M17 3 c-2.2 3-2.2 5.8 0 8 v10"/>',
-  misc: '<path d="M14.6 6.2a3.8 3.8 0 0 0-5 5l-5 5 2.9 2.9 5-5a3.8 3.8 0 0 0 5-5l-2.1 2.1-2-2z"/>'
-};
-
-function catIconSvg(cat, size){
-  size = size || 15;
-  var paths = CAT_ICON_PATHS[cat] || CAT_ICON_PATHS.misc;
-  return (
-    '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-      paths +
-    '</svg>'
-  );
-}
-
 /* ---------------- Hero stats + summary cards: derive from data, don't hand-type ---------------- */
 if (typeof DEVICES !== "undefined" && typeof TASKS !== "undefined"){
   var counts = { ok: 0, pending: 0, not_working: 0, unknown: 0 };
@@ -200,7 +136,7 @@ if (faqList && typeof FAQS !== "undefined"){
   });
 }
 
-/* ---------------- Devices: render + filter (grouped by brand) ---------------- */
+/* ---------------- Devices: render + filter ---------------- */
 var deviceGrid = document.getElementById("deviceGrid");
 var deviceSearch = document.getElementById("deviceSearch");
 var deviceBrandFilter = document.getElementById("deviceBrandFilter");
@@ -214,10 +150,6 @@ var STATUS_LABEL = {
   unknown: "Sem confirmação da HUB"
 };
 
-// Fixed, sensible brand order so the grouped list doesn't reshuffle
-// every time the filters change.
-var BRAND_ORDER = ["Apple", "Samsung", "Google", "Motorola"];
-
 function overallStatus(d){
   if (d.hub === "not_working" || d.minute === "not_working") return "not_working";
   if (d.minute === "ok") return d.hub === "unknown" ? "unknown" : "ok";
@@ -225,35 +157,39 @@ function overallStatus(d){
   return "unknown";
 }
 
-function deviceCardHtml(d){
-  var st = overallStatus(d);
+// A monogram badge, not a reproduction of anyone's trademark — a single
+// initial in the site's own display font, inside the site's own ring style.
+function brandBadge(brand, size){
+  size = size || 40;
+  var initial = brand.charAt(0).toUpperCase();
   return (
-    '<div class="device-card">' +
-      '<div class="device-card-top">' +
-        brandBadgeSvg(d.brand) +
-        '<div class="device-card-titles">' +
-          '<div class="device-brand">' + esc(d.brand) + '</div>' +
-          '<div class="device-model">' + esc(d.model) + '</div>' +
-        '</div>' +
-        '<div class="device-visual">' + phoneIllustrationSvg(st) + '</div>' +
-      '</div>' +
-      '<div class="device-status-row"><span class="status-pill ' + st + '">' + STATUS_LABEL[st] + '</span></div>' +
-      '<p class="device-note">' + esc(d.note) + '</p>' +
-      '<div class="device-sys">' + esc(d.system) + '</div>' +
-    '</div>'
+    '<svg class="brand-badge" width="' + size + '" height="' + size + '" viewBox="0 0 40 40" aria-hidden="true">' +
+      '<circle cx="20" cy="20" r="18.5" class="brand-badge-ring"/>' +
+      '<text x="20" y="26" text-anchor="middle" class="brand-badge-letter">' + initial + '</text>' +
+    '</svg>'
   );
+}
+
+// Real product photos aren't something this guide has the rights to serve,
+// so this is an honest placeholder (placehold.co is a live service — the
+// old Unsplash keyword-placeholder API this was based on was shut down and
+// would just 404). Swap the src for a real photo per-model when you have one.
+function placeholderImg(d){
+  var label = encodeURIComponent(d.brand + "\n" + d.model.split(",")[0].split(" e ")[0]);
+  var src = "https://placehold.co/480x320/161B22/6B7280?font=inter&text=" + label;
+  return '<img class="device-photo" src="' + src + '" alt="Imagem ilustrativa — ' + d.brand + ' ' + d.model + '" loading="lazy" width="480" height="320">';
 }
 
 function renderDevices(){
   if (!deviceGrid || typeof DEVICES === "undefined") return;
   var q = (deviceSearch.value || "").toLowerCase().trim();
-  var brand = deviceBrandFilter.value;
+  var brandFilterVal = deviceBrandFilter.value;
   var status = deviceStatusFilter.value;
 
   var filtered = DEVICES.filter(function(d){
     var st = overallStatus(d);
     var matchesQ = !q || (d.brand + " " + d.model).toLowerCase().indexOf(q) !== -1;
-    var matchesBrand = !brand || d.brand === brand;
+    var matchesBrand = !brandFilterVal || d.brand === brandFilterVal;
     var matchesStatus = !status || st === status;
     return matchesQ && matchesBrand && matchesStatus;
   });
@@ -265,25 +201,40 @@ function renderDevices(){
     return;
   }
 
-  // Group by brand (fixed order), so the grid reads as organised
-  // sections instead of a shuffled list.
-  var groups = {};
+  // Group by brand, preserving each brand's first-appearance order in DEVICES
+  // (rather than alphabetical) so the grouping matches the source data.
+  var order = [], groups = {};
   filtered.forEach(function(d){
-    (groups[d.brand] = groups[d.brand] || []).push(d);
+    if (!groups[d.brand]){ groups[d.brand] = []; order.push(d.brand); }
+    groups[d.brand].push(d);
   });
-  var brandsPresent = BRAND_ORDER.filter(function(b){ return groups[b]; });
-  // Any brand not in the fixed list still gets shown, appended at the end.
-  Object.keys(groups).forEach(function(b){ if (brandsPresent.indexOf(b) === -1) brandsPresent.push(b); });
 
-  deviceGrid.innerHTML = brandsPresent.map(function(b){
-    var items = groups[b];
-    var header =
-      '<div class="group-header">' +
-        '<span class="group-icon">' + brandBadgeSvg(b, 26) + '</span>' +
-        '<span class="group-title">' + esc(b) + '</span>' +
-        '<span class="group-count">' + items.length + ' modelo' + (items.length > 1 ? 's' : '') + '</span>' +
-      '</div>';
-    return header + items.map(deviceCardHtml).join("");
+  deviceGrid.innerHTML = order.map(function(brandName){
+    var items = groups[brandName];
+    var cards = items.map(function(d){
+      var st = overallStatus(d);
+      return (
+        '<div class="device-card">' +
+          placeholderImg(d) +
+          '<div class="device-top">' +
+            '<div><div class="device-brand">' + d.brand + '</div><div class="device-model">' + d.model + '</div></div>' +
+            '<span class="status-pill ' + st + '">' + STATUS_LABEL[st] + '</span>' +
+          '</div>' +
+          '<p class="device-note">' + d.note + '</p>' +
+          '<div class="device-sys">' + d.system + '</div>' +
+        '</div>'
+      );
+    }).join("");
+    return (
+      '<div class="device-group">' +
+        '<div class="device-group-head">' +
+          brandBadge(brandName) +
+          '<span class="device-group-name">' + brandName + '</span>' +
+          '<span class="device-group-count">' + items.length + ' modelo' + (items.length > 1 ? "s" : "") + '</span>' +
+        '</div>' +
+        '<div class="device-group-grid">' + cards + '</div>' +
+      '</div>'
+    );
   }).join("");
 }
 
@@ -302,24 +253,30 @@ if (deviceBrandFilter && typeof DEVICES !== "undefined"){
   renderDevices();
 }
 
-/* ---------------- Tasks: render + search + category chips (grouped by category) ---------------- */
+/* ---------------- Tasks: render + search + category chips ---------------- */
 var taskGrid = document.getElementById("taskGrid");
 var taskSearch = document.getElementById("taskSearch");
 var taskCount = document.getElementById("taskCount");
 var catChips = document.getElementById("catChips");
 var activeCat = "";
-var CATEGORY_ORDER = ["tidy", "laundry", "kitchen", "misc"];
 
-function taskCardHtml(t){
-  return (
-    '<div class="task-card">' +
-      '<div class="task-cat-row cat-' + t.cat + '">' + catIconSvg(t.cat) + '<span class="task-cat">' + CAT_LABELS[t.cat] + '</span></div>' +
-      '<div class="task-pt">' + esc(t.pt) + '</div>' +
-      '<div class="task-en">' + esc(t.en) + '</div>' +
-      '<p class="task-desc">' + esc(t.desc) + '</p>' +
-    '</div>'
-  );
+var CAT_ICON = {
+  tidy:    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 19l5.5-10.5"/><path d="M9 8.5L15 3l3.5 3.5L12.5 12"/><path d="M5 19l2.5-1"/></svg>',
+  laundry: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.6"/><circle cx="7.3" cy="6" r=".9" fill="currentColor" stroke="none"/></svg>',
+  kitchen: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4.5 11.5a7.5 7.5 0 0115 0"/><path d="M4 11.5h16v2.2a1.8 1.8 0 01-1.8 1.8H5.8A1.8 1.8 0 014 13.7z"/><path d="M12 3.5v4"/></svg>',
+  misc:    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true"><circle cx="5.5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="18.5" cy="12" r="1.6" fill="currentColor"/></svg>'
+};
+
+var TASK_DONE_KEY = "nitido_tasks_done_v1";
+function loadDoneTasks(){
+  try { return new Set(JSON.parse(localStorage.getItem(TASK_DONE_KEY)) || []); }
+  catch (e) { return new Set(); }
 }
+function saveDoneTasks(set){
+  try { localStorage.setItem(TASK_DONE_KEY, JSON.stringify(Array.from(set))); }
+  catch (e) { /* storage unavailable (private mode, quota) — fail silently */ }
+}
+var doneTasks = loadDoneTasks();
 
 function renderTasks(){
   if (!taskGrid || typeof TASKS === "undefined") return;
@@ -338,19 +295,23 @@ function renderTasks(){
     return;
   }
 
-  var groups = {};
-  filtered.forEach(function(t){ (groups[t.cat] = groups[t.cat] || []).push(t); });
-  var catsPresent = CATEGORY_ORDER.filter(function(c){ return groups[c]; });
-
-  taskGrid.innerHTML = catsPresent.map(function(c){
-    var items = groups[c];
-    var header =
-      '<div class="group-header">' +
-        '<span class="group-icon cat-' + c + '">' + catIconSvg(c, 20) + '</span>' +
-        '<span class="group-title">' + CAT_LABELS[c] + '</span>' +
-        '<span class="group-count">' + items.length + ' tarefa' + (items.length > 1 ? 's' : '') + '</span>' +
-      '</div>';
-    return header + items.map(taskCardHtml).join("");
+  taskGrid.innerHTML = filtered.map(function(t){
+    var isDone = doneTasks.has(t.id);
+    return (
+      '<div class="task-card' + (isDone ? " is-done" : "") + '" data-task-id="' + t.id + '">' +
+        '<div class="task-card-top">' +
+          '<div class="task-cat"><span class="task-cat-icon">' + CAT_ICON[t.cat] + '</span>' + CAT_LABELS[t.cat] + '</div>' +
+          '<label class="task-check">' +
+            '<input type="checkbox" ' + (isDone ? "checked" : "") + ' aria-label="Marcar como concluída">' +
+            '<span class="task-check-box" aria-hidden="true"></span>' +
+          '</label>' +
+        '</div>' +
+        '<div class="task-pt">' + t.pt + '</div>' +
+        '<div class="task-en">' + t.en + '</div>' +
+        '<p class="task-desc">' + t.desc + '</p>' +
+        '<span class="task-status-badge ' + (isDone ? "done" : "pending") + '">' + (isDone ? "Concluído" : "Pendente") + '</span>' +
+      '</div>'
+    );
   }).join("");
 }
 
@@ -374,6 +335,18 @@ if (taskGrid){
     chip.classList.add("is-active");
     activeCat = chip.dataset.cat;
     renderTasks();
+  });
+  taskGrid.addEventListener("change", function(e){
+    var checkbox = e.target.closest(".task-check input");
+    if (!checkbox) return;
+    var card = checkbox.closest(".task-card");
+    var id = parseInt(card.dataset.taskId, 10);
+    if (checkbox.checked) doneTasks.add(id); else doneTasks.delete(id);
+    saveDoneTasks(doneTasks);
+    card.classList.toggle("is-done", checkbox.checked);
+    var badge = card.querySelector(".task-status-badge");
+    badge.textContent = checkbox.checked ? "Concluído" : "Pendente";
+    badge.className = "task-status-badge " + (checkbox.checked ? "done" : "pending");
   });
 }
 
