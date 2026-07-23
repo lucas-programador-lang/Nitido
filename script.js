@@ -187,7 +187,7 @@ function brandBadge(brand, size){
 // would just 404). Swap the src for a real photo per-model when you have one.
 function placeholderImg(d){
   var label = encodeURIComponent(d.brand + "\n" + d.model.split(",")[0].split(" e ")[0]);
-  var src = "https://placehold.co/480x320/161A30/6E6C8C?font=inter&text=" + label;
+  var src = "https://placehold.co/480x320/131B27/6E6C8C?font=inter&text=" + label;
   return '<img class="device-photo" src="' + src + '" alt="Imagem ilustrativa — ' + d.brand + ' ' + d.model + '" loading="lazy" width="480" height="320">';
 }
 
@@ -231,7 +231,7 @@ function renderDevices(){
     var cards = items.map(function(d){
       var st = overallStatus(d);
       return (
-        '<div class="device-card">' +
+        '<div class="device-card" data-device-id="' + d.id + '">' +
           (isNewModel(d.model) ? '<span class="device-new-badge">Novo</span>' : "") +
           placeholderImg(d) +
           '<div class="device-top">' +
@@ -441,11 +441,11 @@ function initHeroRig(){
   var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
   camera.position.set(0, 1.1, 7.5);
 
-  var goldColor = 0xD3943D;
-  var tealColor = 0x8B7FFF;
+  var goldColor = 0xC9A24D;
+  var tealColor = 0x2FD9B0;
 
   // Floor grid, faint
-  var grid = new THREE.GridHelper(30, 30, 0x282a3c, 0x141626);
+  var grid = new THREE.GridHelper(30, 30, 0x232b38, 0x11161f);
   grid.position.y = -2.4;
   scene.add(grid);
 
@@ -454,7 +454,7 @@ function initHeroRig(){
   scene.add(rigGroup);
 
   var phoneGeo = new THREE.BoxGeometry(1.4, 2.9, 0.16);
-  var phoneMat = new THREE.MeshStandardMaterial({ color: 0x13141f, metalness: 0.6, roughness: 0.25, emissive: 0x06070d });
+  var phoneMat = new THREE.MeshStandardMaterial({ color: 0x131a24, metalness: 0.6, roughness: 0.25, emissive: 0x05070b });
   var phone = new THREE.Mesh(phoneGeo, phoneMat);
   rigGroup.add(phone);
 
@@ -502,12 +502,12 @@ function initHeroRig(){
   }
   var particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  var particleMat = new THREE.PointsMaterial({ color: 0xD3943D, size: 0.02, transparent: true, opacity: 0.5 });
+  var particleMat = new THREE.PointsMaterial({ color: 0xC9A24D, size: 0.02, transparent: true, opacity: 0.5 });
   var particles = new THREE.Points(particleGeo, particleMat);
   scene.add(particles);
 
   // Lights
-  scene.add(new THREE.AmbientLight(0x4a4f6b, 0.9));
+  scene.add(new THREE.AmbientLight(0x3d4658, 0.9));
   var key = new THREE.PointLight(goldColor, 3.2, 20);
   key.position.set(3, 3, 4);
   scene.add(key);
@@ -520,10 +520,15 @@ function initHeroRig(){
   rigGroup.rotation.z = baseTilt;
 
   var mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
-  window.addEventListener("mousemove", function(e){
-    mouseX = (e.clientX / window.innerWidth - 0.5);
-    mouseY = (e.clientY / window.innerHeight - 0.5);
-  }, { passive: true });
+  // BUG FIX: this listener used to be registered unconditionally, running
+  // on every mousemove even with prefers-reduced-motion active (where
+  // animate() below never reads mouseX/mouseY at all). Now it's skipped.
+  if (!prefersReducedMotion){
+    window.addEventListener("mousemove", function(e){
+      mouseX = (e.clientX / window.innerWidth - 0.5);
+      mouseY = (e.clientY / window.innerHeight - 0.5);
+    }, { passive: true });
+  }
 
   function resize(){
     var w = canvas.parentElement.clientWidth;
@@ -589,7 +594,7 @@ function initAngleDemo(){
 
   var head = new THREE.Mesh(
     new THREE.SphereGeometry(1, 24, 24),
-    new THREE.MeshStandardMaterial({ color: 0x191d2c, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({ color: 0x161c28, roughness: 0.8 })
   );
   scene.add(head);
 
@@ -599,7 +604,7 @@ function initAngleDemo(){
 
   var phone = new THREE.Mesh(
     new THREE.BoxGeometry(0.5, 1.0, 0.06),
-    new THREE.MeshStandardMaterial({ color: 0x0d0e18, metalness: 0.7, roughness: 0.2 })
+    new THREE.MeshStandardMaterial({ color: 0x0d1017, metalness: 0.7, roughness: 0.2 })
   );
   phone.position.set(0, 0.55, 0.2);
   mountArm.add(phone);
@@ -607,7 +612,7 @@ function initAngleDemo(){
 
   var edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(phone.geometry),
-    new THREE.LineBasicMaterial({ color: 0xD3943D })
+    new THREE.LineBasicMaterial({ color: 0xC9A24D })
   );
   phone.add(edges);
 
@@ -615,13 +620,13 @@ function initAngleDemo(){
   var arcCurve = new THREE.EllipseCurve(0, 0, 1.3, 1.3, 0, Math.PI/4, false, 0);
   var arcPoints = arcCurve.getPoints(30);
   var arcGeo = new THREE.BufferGeometry().setFromPoints(arcPoints.map(function(p){ return new THREE.Vector3(0, p.y, p.x); }));
-  var arc = new THREE.Line(arcGeo, new THREE.LineDashedMaterial({ color: 0x8B7FFF, dashSize: 0.06, gapSize: 0.05 }));
+  var arc = new THREE.Line(arcGeo, new THREE.LineDashedMaterial({ color: 0x2FD9B0, dashSize: 0.06, gapSize: 0.05 }));
   arc.computeLineDistances();
   arc.position.set(0, 0.75, 0.75);
   scene.add(arc);
 
-  scene.add(new THREE.AmbientLight(0x5a5c80, 1.1));
-  var l = new THREE.PointLight(0xD3943D, 2.6, 15);
+  scene.add(new THREE.AmbientLight(0x4a5568, 1.1));
+  var l = new THREE.PointLight(0xC9A24D, 2.6, 15);
   l.position.set(3, 3, 4);
   scene.add(l);
 
@@ -695,8 +700,71 @@ initTiltCards();
 
 
 /* =============================================
-   PERSONALIZAÇÃO INTELIGENTE - BANNER PRINCIPAL
+   PARTE 1 — DETECÇÃO DE DISPOSITIVO (honesta) + BANNER PRINCIPAL
    ============================================= */
+
+// Mapeamento de códigos de modelo Android -> id em DEVICES.
+// Android costuma expor o codinome do modelo no User-Agent (ex.: "SM-S911B");
+// iOS não expõe o número do iPhone desde o iOS 13 (Safari normaliza tudo
+// como só "iPhone"), então para Apple a gente não inventa o modelo exato.
+var ANDROID_MODEL_CODE_MAP = {
+  "SM-S911": 9, "SM-S916": 9, "SM-S918": 9,     // Galaxy S23 / S23+ / S23 Ultra
+  "SM-S921": 11, "SM-S926": 11, "SM-S928": 11,  // Galaxy S24 / S24+ / S24 Ultra
+  "SM-A155": 17,                                 // Galaxy A15
+  "SM-A305": 18, "SM-A315": 18,                  // Galaxy A30
+  "Pixel 6": 13, "Pixel 7": 14, "Pixel 8": 15, "Pixel 9": 16
+};
+
+function findDeviceMatch(ua, brand){
+  if (typeof DEVICES === "undefined") return null;
+  if (brand === "samsung" || brand === "google"){
+    for (var code in ANDROID_MODEL_CODE_MAP){
+      if (ua.indexOf(code) !== -1){
+        var id = ANDROID_MODEL_CODE_MAP[code];
+        var found = DEVICES.filter(function(d){ return d.id === id; });
+        return found.length ? found[0] : null;
+      }
+    }
+  }
+  return null; // iPhone/Motorola: sem número confiável via UA — não inventamos.
+}
+
+// BUG FIX: esta era a lógica que faltava. Antes, nada cruzava a marca
+// detectada com DEVICES nem escrevia uma mensagem real de compatibilidade —
+// por isso "o QR não detectava o modelo". Agora esta função existe e é
+// chamada por initSmartHero() logo abaixo.
+function renderDeviceMatchBanner(brand, ua){
+  var banner = document.getElementById("celularesMatchBanner");
+  if (!banner) return;
+
+  var match = findDeviceMatch(ua, brand);
+
+  if (match){
+    var st = overallStatus(match);
+    var label = STATUS_LABEL[st] || st;
+    banner.className = "device-match-banner status-" + st;
+    banner.innerHTML =
+      "<strong>Detectamos: " + match.brand + " " + match.model + "</strong><br>" +
+      "Status atual: " + label + ". " + match.note;
+  } else if (brand !== "generic"){
+    banner.className = "device-match-banner status-unknown";
+    banner.innerHTML =
+      "Detectamos um aparelho " + brand.charAt(0).toUpperCase() + brand.slice(1) +
+      ", mas o navegador não informa o modelo exato com segurança " +
+      "(isso é uma limitação do próprio sistema, não deste site). " +
+      "Use a busca abaixo para confirmar o seu modelo manualmente.";
+  } else {
+    banner.className = "device-match-banner status-unknown";
+    banner.innerHTML = "Não conseguimos identificar automaticamente o seu aparelho. Use a busca abaixo para conferir o seu modelo.";
+  }
+
+  // Rola até a seção de celulares e mostra o resultado — sem travar o resto do site.
+  setTimeout(function(){
+    var target = document.getElementById("celulares");
+    if (target) target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
+  }, 900);
+}
+
 function initSmartHero() {
   const heroDynamic = document.getElementById('heroDynamic');
   if (!heroDynamic) return;
@@ -726,13 +794,18 @@ function initSmartHero() {
   let html = '';
 
   if (!isMobile) {
-    // === MODO DESKTOP ===
+    // === MODO DESKTOP: orienta a usar o celular, sem travar o conteúdo ===
+    var qrUrl = window.location.href.split('?')[0] + '?src=qr';
     html = `
-      <p class="eyebrow" style="color:#F0BE72;">EXCLUSIVO PARA CELULAR</p>
-      <h1 class="hero-title">Acesso Ultra Premium</h1>
-      <p class="hero-sub" style="max-width:520px; margin:1.8rem auto 2.4rem;">
-        Acesse este site usando a câmera do seu celular para detectar a compatibilidade 
-        do seu aparelho e liberar seu acesso Ultra Premium.
+      <p class="eyebrow">Recomendado: acesse pelo celular</p>
+      <h1 class="hero-title">Veja se o <span class="accent-serif">seu celular</span> é compatível</h1>
+      <div class="desktop-hint-banner">
+        A gravação para o MINUTE é feita pela câmera do celular. Você pode continuar
+        navegando por aqui normalmente, ou escanear o QR Code abaixo para abrir este
+        guia no seu celular e já ver o status do seu aparelho.
+      </div>
+      <p class="hero-sub" style="max-width:520px; margin:1.2rem auto 2rem;">
+        Aponte a câmera do celular para o QR Code abaixo para abrir o guia lá.
       </p>
       <div class="qr-container" id="qrContainer"></div>
       <div class="hero-stats" style="margin-top: 2.8rem; opacity: 0.9;">
@@ -741,6 +814,7 @@ function initSmartHero() {
         <div class="stat"><span class="stat-num">45°</span><span class="stat-label">inclinação recomendada pela HUB</span></div>
       </div>
     `;
+    window.__qrUrl = qrUrl;
   } else {
     // === MODO MOBILE ===
     let title = 'Grave sua rotina.<br><span class="accent-serif">Deixe nítido</span> o que importa.';
@@ -749,23 +823,23 @@ function initSmartHero() {
 
     switch(brand) {
       case 'apple':
-        title = 'Proteção Ultra Premium para o seu <span class="accent-serif">iPhone</span>';
-        sub = 'Capinhas, películas, suportes e acessórios Apple compatíveis com o MINUTE.';
+        title = 'Guia para o seu <span class="accent-serif">iPhone</span>';
+        sub = 'Veja logo abaixo o status de compatibilidade da sua linha de iPhone no MINUTE.';
         eyebrow = 'Detectado: iPhone';
         break;
       case 'samsung':
-        title = 'Galaxy Ultra Experience';
-        sub = 'Acessórios premium para linha Galaxy — compatibilidade confirmada no MINUTE.';
+        title = 'Guia para o seu <span class="accent-serif">Galaxy</span>';
+        sub = 'Veja logo abaixo o status de compatibilidade do seu modelo Galaxy no MINUTE.';
         eyebrow = 'Detectado: Samsung';
         break;
       case 'motorola':
-        title = 'Motorola Ready';
-        sub = 'Suportes e acessórios otimizados para sua Motorola no MINUTE.';
+        title = 'Guia para a sua <span class="accent-serif">Motorola</span>';
+        sub = 'Veja logo abaixo o status de compatibilidade do seu modelo Motorola no MINUTE.';
         eyebrow = 'Detectado: Motorola';
         break;
       case 'google':
-        title = 'Pixel Perfect';
-        sub = 'Acessórios para Google Pixel com gravação estável no MINUTE.';
+        title = 'Guia para o seu <span class="accent-serif">Pixel</span>';
+        sub = 'Veja logo abaixo o status de compatibilidade do seu Pixel no MINUTE.';
         eyebrow = 'Detectado: Google Pixel';
         break;
     }
@@ -792,6 +866,8 @@ function initSmartHero() {
   // Aplica cor da marca no mobile
   if (isMobile) {
     document.querySelector('.hero').classList.add(`hero-brand-${brand}`);
+    // PARTE 1: dispara a detecção de modelo + rolagem + mensagem no #celulares
+    renderDeviceMatchBanner(brand, ua);
   }
 
   // Re-attach the count-up observer to the .stat-num nodes just created
@@ -806,13 +882,25 @@ function initSmartHero() {
     const qrScript = document.createElement('script');
     qrScript.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
     qrScript.onload = () => {
-      new QRCode(document.getElementById("qrContainer"), {
-        text: window.location.href,
-        width: 265,
-        height: 265,
-        colorDark: "#090A14",
-        colorLight: "#FFFFFF"
-      });
+      // BUG FIX: buscar o container de novo em vez de guardar uma referência
+      // antiga — evita erro de console se o DOM tiver mudado entre o disparo
+      // do <script> e a execução deste callback assíncrono.
+      var qrContainer = document.getElementById("qrContainer");
+      if (qrContainer) {
+        new QRCode(qrContainer, {
+          text: window.__qrUrl || window.location.href,
+          width: 265,
+          height: 265,
+          colorDark: "#090A14",
+          colorLight: "#FFFFFF"
+        });
+      }
+    };
+    // BUG FIX: sem isso, falha de rede/CDN travava o QR silenciosamente,
+    // sem nenhum aviso e sem erro tratado.
+    qrScript.onerror = () => {
+      var qrContainer = document.getElementById("qrContainer");
+      if (qrContainer) qrContainer.textContent = "Não foi possível carregar o QR Code agora. Recarregue a página.";
     };
     document.head.appendChild(qrScript);
   }
