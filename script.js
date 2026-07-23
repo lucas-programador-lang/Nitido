@@ -180,6 +180,12 @@ function placeholderImg(d){
   return '<img class="device-photo" src="' + src + '" alt="Imagem ilustrativa — ' + d.brand + ' ' + d.model + '" loading="lazy" width="480" height="320">';
 }
 
+// Recency, not a fabricated price — these are simply the newest lines in the list.
+var NEW_MODEL_MARKERS = ["iPhone 17", "Galaxy S25"];
+function isNewModel(model){
+  return NEW_MODEL_MARKERS.some(function(marker){ return model.indexOf(marker) !== -1; });
+}
+
 function renderDevices(){
   if (!deviceGrid || typeof DEVICES === "undefined") return;
   var q = (deviceSearch.value || "").toLowerCase().trim();
@@ -215,6 +221,7 @@ function renderDevices(){
       var st = overallStatus(d);
       return (
         '<div class="device-card">' +
+          (isNewModel(d.model) ? '<span class="device-new-badge">Novo</span>' : "") +
           placeholderImg(d) +
           '<div class="device-top">' +
             '<div><div class="device-brand">' + d.brand + '</div><div class="device-model">' + d.model + '</div></div>' +
@@ -226,7 +233,7 @@ function renderDevices(){
       );
     }).join("");
     return (
-      '<div class="device-group">' +
+      '<div class="device-group" data-brand="' + brandName + '">' +
         '<div class="device-group-head">' +
           brandBadge(brandName) +
           '<span class="device-group-name">' + brandName + '</span>' +
@@ -245,6 +252,20 @@ if (deviceBrandFilter && typeof DEVICES !== "undefined"){
     opt.value = b; opt.textContent = b;
     deviceBrandFilter.appendChild(opt);
   });
+
+  var brandNav = document.getElementById("brandNav");
+  if (brandNav){
+    brandNav.innerHTML = brands.map(function(b){
+      return '<button type="button" class="brand-nav-item" data-brand="' + b + '">' + brandBadge(b, 26) + '<span>' + b + '</span></button>';
+    }).join("");
+    brandNav.addEventListener("click", function(e){
+      var item = e.target.closest(".brand-nav-item");
+      if (!item) return;
+      var target = deviceGrid.querySelector('.device-group[data-brand="' + item.dataset.brand + '"]');
+      if (target) target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
+    });
+  }
+
   var renderDevicesDebounced = debounce(renderDevices, 120);
   deviceSearch.addEventListener("input", renderDevicesDebounced);
   [deviceBrandFilter, deviceStatusFilter].forEach(function(el){
@@ -619,9 +640,44 @@ function initAngleDemo(){
   }
 }
 
+/* ============================================================
+   3D tilt — cards follow the cursor with a subtle perspective
+   rotation. Delegated on document so it survives re-renders from
+   the device/task filters, which replace those cards' innerHTML.
+   ============================================================ */
+function initTiltCards(){
+  var canTilt = window.matchMedia("(hover: hover) and (pointer: fine)").matches && !prefersReducedMotion;
+  if (!canTilt) return;
+
+  var TILT_SELECTOR = ".device-card, .task-card, .step-card, .approval-card, .summary-card";
+  var MAX_DEG = 6;
+  var active = null;
+
+  document.addEventListener("mousemove", function(e){
+    var card = e.target.closest(TILT_SELECTOR);
+    if (card !== active){
+      if (active){ active.style.transform = ""; active.classList.remove("is-tilting"); }
+      active = card;
+      if (active) active.classList.add("is-tilting");
+    }
+    if (!card) return;
+    var r = card.getBoundingClientRect();
+    var px = (e.clientX - r.left) / r.width - 0.5;
+    var py = (e.clientY - r.top) / r.height - 0.5;
+    var rx = (py * -MAX_DEG).toFixed(2);
+    var ry = (px * MAX_DEG).toFixed(2);
+    card.style.transform = "perspective(900px) rotateX(" + rx + "deg) rotateY(" + ry + "deg) translateY(-4px) translateZ(0)";
+  }, { passive: true });
+
+  document.addEventListener("mouseleave", function(){
+    if (active){ active.style.transform = ""; active.classList.remove("is-tilting"); active = null; }
+  }, true);
+}
+
 /* ---------------- Boot ---------------- */
 document.getElementById("year") && (document.getElementById("year").textContent = new Date().getFullYear());
 initHeroRig();
 initAngleDemo();
+initTiltCards();
 
 })();
