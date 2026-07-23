@@ -4,12 +4,14 @@
    Type: Fraunces (display) / Inter (body) / JetBrains Mono (data)
    ============================================================ */
 :root{
-  --bg-0: #0A0C0F;
+  --bg-0: #07080B;
   --bg-1: #10141A;
   --bg-2: #161B22;
+  --bg-2-glass: rgba(22,27,34,.55);
   --line: rgba(233,229,220,0.09);
   --line-strong: rgba(233,229,220,0.16);
   --ink: #EDEAE4;
+  --ink-bright: #FFFFFF;
   --ink-dim: #9CA3AE;
   --ink-faint: #6B7280;
   --gold: #C9A227;
@@ -58,7 +60,7 @@ body::before{
 img,canvas{ display:block; max-width:100%; }
 a{ color: inherit; text-decoration: none; }
 ul{ margin:0; padding:0; list-style:none; }
-h1,h2,h3{ font-family: var(--font-display); font-weight: 600; line-height: 1.1; margin: 0; }
+h1,h2,h3{ font-family: var(--font-display); font-weight: 600; line-height: 1.1; margin: 0; color: var(--ink-bright); }
 p{ margin:0; }
 ::selection{ background: var(--gold); color: #10141A; }
 
@@ -265,11 +267,17 @@ select:focus-visible{ border-color: var(--gold-soft); }
 
 .device-group-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
 .device-card{
-  background: var(--bg-2); border:1px solid var(--line); border-radius: var(--radius-m);
+  position: relative;
+  background: var(--bg-2-glass); backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border:1px solid var(--line-strong); border-radius: var(--radius-m);
   padding: 1.4rem; box-shadow: var(--shadow-card); overflow:hidden;
   transition: transform .35s var(--ease-out), border-color .3s ease, box-shadow .35s var(--ease-out);
 }
-.device-card:hover{ transform: translateY(-3px); border-color: var(--line-strong); box-shadow: var(--shadow-card-hover); }
+.device-card::before{
+  content:""; position:absolute; top:0; left:8%; right:8%; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent); pointer-events:none;
+}
+.device-card:hover{ transform: translateY(-3px); border-color: var(--gold-soft); box-shadow: var(--shadow-card-hover); }
 .device-photo{
   display:block; object-fit: cover; aspect-ratio: 3/2; background: var(--bg-1);
   margin: -1.4rem -1.4rem .9rem; width: calc(100% + 2.8rem); max-width: none; border-bottom: 1px solid var(--line);
@@ -283,8 +291,6 @@ select:focus-visible{ border-color: var(--gold-soft); }
   font-family: var(--font-mono); font-size:.65rem; font-weight:700; letter-spacing:.04em;
   padding:.25rem .55rem; border-radius: 999px; box-shadow: 0 4px 12px -4px rgba(201,162,39,.6);
 }
-.device-card{ position: relative; }
-
 .brand-nav{ display:flex; gap: .7rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
 .brand-nav-item{
   display:flex; align-items:center; gap:.55rem; padding: .5rem .9rem .5rem .5rem;
@@ -311,11 +317,17 @@ select:focus-visible{ border-color: var(--gold-soft); }
 /* ============ Task grid ============ */
 .task-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
 .task-card{
-  background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius-m);
-  padding: 1.3rem 1.4rem; box-shadow: var(--shadow-card);
+  position: relative;
+  background: var(--bg-2-glass); backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-m);
+  padding: 1.3rem 1.4rem; box-shadow: var(--shadow-card); overflow:hidden;
   transition: transform .35s var(--ease-out), border-color .3s ease, box-shadow .35s var(--ease-out);
 }
-.task-card:hover{ transform: translateY(-3px); border-color: rgba(31,182,166,.4); box-shadow: var(--shadow-card-hover); }
+.task-card::before{
+  content:""; position:absolute; top:0; left:8%; right:8%; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); pointer-events:none;
+}
+.task-card:hover{ transform: translateY(-3px); border-color: rgba(31,182,166,.5); box-shadow: var(--shadow-card-hover); }
 .task-card-top{ display:flex; justify-content:space-between; align-items:center; gap: .8rem; }
 .task-cat{ font-family: var(--font-mono); font-size: .68rem; color: var(--teal); text-transform:uppercase; letter-spacing:.06em; display:flex; align-items:center; gap:.4rem; }
 .task-cat-icon{ display:inline-flex; color: var(--teal); }
