@@ -184,10 +184,16 @@ function overallStatus(d){
 var BRAND_LOGO_PATHS = {
   apple:
     '<path fill="currentColor" d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.87-1.99 1.55-3.014 1.55-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.145-1.64 3.243-1.68.03.13.05.29.05.45zM20.5 17.14c-.03.07-.463 1.58-1.518 3.12-.94 1.34-1.94 2.71-3.492 2.71-1.55 0-1.94-.9-3.734-.9-1.762 0-2.196.87-3.732.9-1.535.03-2.612-1.44-3.586-2.77-1.945-2.75-3.42-7.79-1.44-11.28.98-1.73 2.72-2.82 4.62-2.85 1.44-.03 2.79.97 3.665.97.87 0 2.53-1.2 4.27-1.02.727.03 2.77.29 4.09 2.22-.104.06-2.44 1.42-2.41 4.24.03 3.38 2.96 4.5 2.967 4.66z"/>',
+  // Anel orbitando um núcleo — referência direta ao símbolo "Galaxy" usado nos aparelhos Samsung
+  // (a marca corporativa Samsung é uma wordmark; aqui usamos o símbolo que efetivamente aparece nos celulares).
   samsung:
-    '<path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2.4a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4zM7.8 8.2a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4zm8.4 0a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4zM12 12c2.87 0 5.2 1.55 5.2 3.46V16H6.8v-.54C6.8 13.55 9.13 12 12 12z"/>',
+    '<ellipse cx="12" cy="12" rx="10.2" ry="4.1" transform="rotate(-24 12 12)" fill="none" stroke="currentColor" stroke-width="1.7"/>' +
+    '<circle cx="12" cy="12" r="3.4" fill="currentColor"/>',
+  // "Batwing" em duas pétalas convergindo num ponto central — a mesma construção geométrica
+  // do símbolo clássico da Motorola (M estilizado em forma de asas).
   motorola:
-    '<path fill="currentColor" d="M12 1.5A10.5 10.5 0 1012 22.5 10.5 10.5 0 0012 1.5zm-1.36 5.9h2.72l3.55 9.2h-2.55l-.62-1.72h-3.48l-.62 1.72H7.09l3.55-9.2zm1.36 2.36l-1.13 3.16h2.26L12 9.76z"/>',
+    '<path fill="currentColor" d="M12 20.5C12 20.5 3.6 16.2 3.6 8.8C3.6 5.1 6.6 2.3 10.1 2.3c.66 0 1.28.07 1.86.2C10.3 7.9 10.7 14.4 12 20.5Z"/>' +
+    '<path fill="currentColor" d="M12 20.5C12 20.5 20.4 16.2 20.4 8.8C20.4 5.1 17.4 2.3 13.9 2.3c-.66 0-1.28.07-1.86.2C13.7 7.9 13.3 14.4 12 20.5Z"/>',
   google:
     '<path fill="currentColor" d="M21.6 12.23c0-.68-.06-1.36-.19-2H12v3.78h5.4a4.62 4.62 0 01-2 3.04v2.5h3.24c1.9-1.75 2.96-4.33 2.96-7.32z"/>' +
     '<path fill="currentColor" d="M12 22c2.7 0 4.97-.89 6.63-2.42l-3.24-2.5c-.9.6-2.06.95-3.39.95-2.6 0-4.8-1.75-5.59-4.11H3.06v2.58A10 10 0 0012 22z"/>' +
@@ -218,10 +224,25 @@ function brandBadge(brand, size){
   );
 }
 
-function placeholderImg(d){
+// Gera a URL do placeholder estilizado (usado sempre que não há foto real cadastrada,
+// e também como rede de segurança se uma foto real falhar ao carregar).
+function placeholderSrc(d){
   var label = encodeURIComponent(d.brand + "\n" + d.model.split(",")[0].split(" e ")[0]);
-  var src = "https://placehold.co/480x320/131B27/6E6C8C?font=inter&text=" + label;
-  return '<img class="device-photo" src="' + src + '" alt="Imagem ilustrativa — ' + d.brand + ' ' + d.model + '" loading="lazy" width="480" height="320">';
+  return "https://placehold.co/480x320/131B27/6E6C8C?font=inter&text=" + label;
+}
+
+// Renderiza a foto do aparelho. Se o objeto do dispositivo (definido em data.js) tiver um
+// campo opcional `photo` com uma URL de imagem real, ela é usada; caso contrário (ou se a URL
+// falhar ao carregar), cai automaticamente no placeholder estilizado — nunca quebra o layout.
+function placeholderImg(d){
+  var fallback = placeholderSrc(d);
+  var hasRealPhoto = !!d.photo;
+  var src = hasRealPhoto ? d.photo : fallback;
+  var altText = "Foto do " + d.brand + " " + d.model;
+  var onerrorAttr = hasRealPhoto
+    ? ' onerror="this.onerror=null;this.src=\'' + fallback.replace(/'/g, "%27") + '\';"'
+    : "";
+  return '<img class="device-photo" src="' + src + '" alt="' + altText + '" loading="lazy" width="480" height="320"' + onerrorAttr + '>';
 }
 
 var NEW_MODEL_MARKERS = ["iPhone 17", "Galaxy S25"];
