@@ -303,7 +303,10 @@
 
 <!-- Scripts no fim do <body>, com defer para não bloquear a renderização e preservar
      a ordem de execução (three.js → data.js → script.js) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+<!-- three.js carrega em paralelo (async), sem travar data.js/script.js: a detecção de dispositivo,
+     os grids de celulares/tarefas e a personalização do Hero NÃO dependem do Three.js e não podem
+     ficar reféns da velocidade de um CDN externo, especialmente em conexão móvel. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" async></script>
 <script src="data.js" defer></script>
 <script src="script.js" defer></script>
 </body>
