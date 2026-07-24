@@ -176,29 +176,21 @@ function overallStatus(d){
 }
 
 /* ============================================================
-   Logos oficiais das marcas — SVG vetorial (viewBox 24x24), com
-   fill="currentColor" para herdar cor/hover do CSS automaticamente.
-   Representações estilizadas em traço único; para peças de marketing
-   oficiais, use sempre os brand kits originais de cada fabricante.
+   Logos oficiais das marcas — paths SVG reais (viewBox 0 0 24 24),
+   extraídos da biblioteca open-source Simple Icons (licença CC0,
+   dados de marca mantidos e revisados pela comunidade — não são
+   desenhos aproximados). fill="currentColor" já vem em cada path,
+   então herdam automaticamente a cor e a transição de hover do CSS.
    ============================================================ */
 var BRAND_LOGO_PATHS = {
   apple:
-    '<path fill="currentColor" d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.87-1.99 1.55-3.014 1.55-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.145-1.64 3.243-1.68.03.13.05.29.05.45zM20.5 17.14c-.03.07-.463 1.58-1.518 3.12-.94 1.34-1.94 2.71-3.492 2.71-1.55 0-1.94-.9-3.734-.9-1.762 0-2.196.87-3.732.9-1.535.03-2.612-1.44-3.586-2.77-1.945-2.75-3.42-7.79-1.44-11.28.98-1.73 2.72-2.82 4.62-2.85 1.44-.03 2.79.97 3.665.97.87 0 2.53-1.2 4.27-1.02.727.03 2.77.29 4.09 2.22-.104.06-2.44 1.42-2.41 4.24.03 3.38 2.96 4.5 2.967 4.66z"/>',
-  // Anel orbitando um núcleo — referência direta ao símbolo "Galaxy" usado nos aparelhos Samsung
-  // (a marca corporativa Samsung é uma wordmark; aqui usamos o símbolo que efetivamente aparece nos celulares).
+    '<path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>',
   samsung:
-    '<ellipse cx="12" cy="12" rx="10.2" ry="4.1" transform="rotate(-24 12 12)" fill="none" stroke="currentColor" stroke-width="1.7"/>' +
-    '<circle cx="12" cy="12" r="3.4" fill="currentColor"/>',
-  // "Batwing" em duas pétalas convergindo num ponto central — a mesma construção geométrica
-  // do símbolo clássico da Motorola (M estilizado em forma de asas).
+    '<path fill="currentColor" d="M19.8166 10.2808l.0459 2.6934h-.023l-.7793-2.6934h-1.2837v3.3925h.8481l-.0458-2.785h.023l.8366 2.785h1.2264v-3.3925zm-16.149 0l-.6418 3.427h.9284l.4699-3.1175h.0229l.4585 3.1174h.9169l-.6304-3.4269zm5.1805 0l-.424 2.6132h-.023l-.424-2.6132H6.5788l-.0688 3.427h.8596l.023-3.0832h.0114l.573 3.0831h.8711l.5731-3.083h.023l.0228 3.083h.8596l-.0802-3.4269zm-7.2664 2.4527c.0343.0802.0229.1949.0114.2522-.0229.1146-.1031.2292-.3324.2292-.2177 0-.3438-.126-.3438-.3095v-.3323H0v.2636c0 .7679.6074.9971 1.2493.9971.6189 0 1.1346-.2178 1.2149-.7794.0458-.298.0114-.4928 0-.5616-.1605-.722-1.467-.9283-1.5588-1.3295-.0114-.0688-.0114-.1375 0-.1834.023-.1146.1032-.2292.3095-.2292.2063 0 .321.126.321.3095v.2063h.8595v-.2407c0-.745-.6762-.8596-1.1576-.8596-.6074 0-1.1117.2063-1.2034.7564-.023.149-.0344.2866.0114.4585.1376.7106 1.364.9169 1.5358 1.3524m11.152 0c.0343.0803.0228.1834.0114.2522-.023.1146-.1032.2292-.3324.2292-.2178 0-.3438-.126-.3438-.3095v-.3323h-.917v.2636c0 .7564.596.9857 1.2379.9857.6189 0 1.1232-.2063 1.2034-.7794.0459-.298.0115-.4814 0-.5616-.1375-.7106-1.4327-.9284-1.5243-1.318-.0115-.0688-.0115-.1376 0-.1835.0229-.1146.1031-.2292.3094-.2292.1948 0 .321.126.321.3095v.2063h.848v-.2407c0-.745-.6647-.8596-1.146-.8596-.6075 0-1.1004.1948-1.192.7564-.023.149-.023.2866.0114.4585.1376.7106 1.341.9054 1.513 1.3524m2.8882.4585c.2407 0 .3094-.1605.3323-.2522.0115-.0343.0115-.0917.0115-.126v-2.533h.871v2.4642c0 .0688 0 .1948-.0114.2292-.0573.6419-.5616.8482-1.192.8482-.6303 0-1.1346-.2063-1.192-.8482 0-.0344-.0114-.1604-.0114-.2292v-2.4642h.871v2.533c0 .0458 0 .0916.0115.126 0 .0917.0688.2522.3095.2522m7.1518-.0344c.2522 0 .3324-.1605.3553-.2522.0115-.0343.0115-.0917.0115-.126v-.4929h-.3553v-.5043H24v.917c0 .0687 0 .1145-.0115.2292-.0573.6303-.596.8481-1.2034.8481-.6075 0-1.1461-.2178-1.2034-.8481-.0115-.1147-.0115-.1605-.0115-.2293v-1.444c0-.0574.0115-.172.0115-.2293.0802-.6419.596-.8482 1.2034-.8482s1.1347.2063 1.2034.8482c.0115.1031.0115.2292.0115.2292v.1146h-.8596v-.1948s0-.0803-.0115-.1261c-.0114-.0802-.0802-.2521-.3438-.2521-.2521 0-.321.1604-.3438.2521-.0115.0458-.0115.1032-.0115.1605v1.5702c0 .0458 0 .0916.0115.126 0 .0917.0917.2522.3323.2522"/>',
   motorola:
-    '<path fill="currentColor" d="M12 20.5C12 20.5 3.6 16.2 3.6 8.8C3.6 5.1 6.6 2.3 10.1 2.3c.66 0 1.28.07 1.86.2C10.3 7.9 10.7 14.4 12 20.5Z"/>' +
-    '<path fill="currentColor" d="M12 20.5C12 20.5 20.4 16.2 20.4 8.8C20.4 5.1 17.4 2.3 13.9 2.3c-.66 0-1.28.07-1.86.2C13.7 7.9 13.3 14.4 12 20.5Z"/>',
+    '<path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12C24.002 5.375 18.632.002 12.007 0H12zm7.327 18.065s-.581-2.627-1.528-4.197c-.514-.857-1.308-1.553-2.368-1.532-.745 0-1.399.423-2.2 1.553-.469.77-.882 1.573-1.235 2.403 0 0-.29-.675-.63-1.343a8.038 8.038 0 0 0-.605-1.049c-.804-1.13-1.455-1.539-2.2-1.553-1.049-.021-1.854.675-2.364 1.528-.948 1.574-1.528 4.197-1.528 4.197h-.864l4.606-15.12 3.56 11.804.024.021.024-.021 3.56-11.804 4.61 15.113h-.862z"/>',
   google:
-    '<path fill="currentColor" d="M21.6 12.23c0-.68-.06-1.36-.19-2H12v3.78h5.4a4.62 4.62 0 01-2 3.04v2.5h3.24c1.9-1.75 2.96-4.33 2.96-7.32z"/>' +
-    '<path fill="currentColor" d="M12 22c2.7 0 4.97-.89 6.63-2.42l-3.24-2.5c-.9.6-2.06.95-3.39.95-2.6 0-4.8-1.75-5.59-4.11H3.06v2.58A10 10 0 0012 22z"/>' +
-    '<path fill="currentColor" d="M6.41 13.92a5.99 5.99 0 010-3.84V7.5H3.06a10 10 0 000 8.99l3.35-2.57z"/>' +
-    '<path fill="currentColor" d="M12 5.98c1.47 0 2.79.5 3.83 1.49l2.87-2.87A9.62 9.62 0 0012 2a10 10 0 00-8.94 5.5l3.35 2.58C7.2 7.73 9.4 5.98 12 5.98z"/>'
+    '<path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>'
 };
 
 function brandBadge(brand, size){
@@ -222,27 +214,6 @@ function brandBadge(brand, size){
       inner +
     '</svg>'
   );
-}
-
-// Gera a URL do placeholder estilizado (usado sempre que não há foto real cadastrada,
-// e também como rede de segurança se uma foto real falhar ao carregar).
-function placeholderSrc(d){
-  var label = encodeURIComponent(d.brand + "\n" + d.model.split(",")[0].split(" e ")[0]);
-  return "https://placehold.co/480x320/131B27/6E6C8C?font=inter&text=" + label;
-}
-
-// Renderiza a foto do aparelho. Se o objeto do dispositivo (definido em data.js) tiver um
-// campo opcional `photo` com uma URL de imagem real, ela é usada; caso contrário (ou se a URL
-// falhar ao carregar), cai automaticamente no placeholder estilizado — nunca quebra o layout.
-function placeholderImg(d){
-  var fallback = placeholderSrc(d);
-  var hasRealPhoto = !!d.photo;
-  var src = hasRealPhoto ? d.photo : fallback;
-  var altText = "Foto do " + d.brand + " " + d.model;
-  var onerrorAttr = hasRealPhoto
-    ? ' onerror="this.onerror=null;this.src=\'' + fallback.replace(/'/g, "%27") + '\';"'
-    : "";
-  return '<img class="device-photo" src="' + src + '" alt="' + altText + '" loading="lazy" width="480" height="320"' + onerrorAttr + '>';
 }
 
 var NEW_MODEL_MARKERS = ["iPhone 17", "Galaxy S25"];
@@ -282,12 +253,16 @@ function renderDevices(){
     var items = groups[brandName];
     var cards = items.map(function(d){
       var st = overallStatus(d);
+      // Card puramente tipográfico: sem <img>, a identidade visual vem da logo vetorial (SVG)
+      // da marca ao lado do nome do modelo, mais o sistema de status por cor/texto.
       return (
         '<div class="device-card" data-device-id="' + d.id + '">' +
           (isNewModel(d.model) ? '<span class="device-new-badge">Novo</span>' : "") +
-          placeholderImg(d) +
           '<div class="device-top">' +
-            '<div><div class="device-brand">' + d.brand + '</div><div class="device-model">' + d.model + '</div></div>' +
+            '<div class="device-top-id">' +
+              brandBadge(d.brand, 30) +
+              '<div><div class="device-brand">' + d.brand + '</div><div class="device-model">' + d.model + '</div></div>' +
+            '</div>' +
             '<span class="status-pill ' + st + '">' + STATUS_LABEL[st] + '</span>' +
           '</div>' +
           '<p class="device-note">' + d.note + '</p>' +
@@ -744,8 +719,22 @@ function initTiltCards(){
 
 var yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
-initHeroRig();
-initAngleDemo();
+
+// three.js agora carrega em modo async (ver index.html), então pode não estar pronto ainda
+// quando este trecho executa. Em vez de depender da ordem dos <script>, tentamos algumas vezes
+// com um pequeno intervalo; initHeroRig/initAngleDemo já são seguras (retornam cedo se THREE
+// ainda não existir), então isso nunca trava o resto do site — só a cena 3D aparece um instante depois.
+function tryInitThreeScenes(attemptsLeft){
+  if (typeof THREE !== "undefined"){
+    initHeroRig();
+    initAngleDemo();
+    return;
+  }
+  if (attemptsLeft <= 0) return; // three.js não carregou (bloqueio de rede, offline, etc.) — segue sem a cena 3D
+  setTimeout(function(){ tryInitThreeScenes(attemptsLeft - 1); }, 300);
+}
+tryInitThreeScenes(20); // ~6s de tolerância, suficiente até para conexões móveis mais lentas
+
 initTiltCards();
 
 })();
@@ -885,7 +874,17 @@ function renderDeviceMatchBanner(brand, ua){
   var searchInput = document.getElementById("deviceSearch");
   if (!banner) return;
 
+  // Detecta se o usuário chegou aqui pelo QR Code do Desktop (?src=qr). Isso NUNCA altera o
+  // resultado da detecção em si — o status exibido (compatível/pendente/não funciona/desconhecido)
+  // continua sendo sempre o resultado real do fingerprint. Forçar uma mensagem "positiva" fixa aqui
+  // seria enganoso: mostraria "compatível" para alguém com um aparelho que na verdade não funciona.
+  // O que o parâmetro realmente melhora: pula o delay artificial do scroll (quem escaneou o QR já
+  // decidiu ver a seção, não precisa esperar) e deixa isso explícito no texto do banner.
+  var isFromQR = false;
+  try { isFromQR = new URLSearchParams(window.location.search).get('src') === 'qr'; } catch (e) { isFromQR = false; }
+
   var BRAND_LABEL = { apple: "Apple", samsung: "Samsung", motorola: "Motorola", google: "Google" };
+  var qrSuffix = isFromQR ? " <em>(detectado via QR Code)</em>" : "";
 
   var matchResult = findDeviceMatch(ua, brand);
   // findDeviceMatch pode retornar um array de compatíveis — seleção estável: sempre
@@ -898,9 +897,9 @@ function renderDeviceMatchBanner(brand, ua){
 
     banner.className = "device-match-banner status-" + st;
     if (st === "ok") {
-        banner.innerHTML = "<strong>O modelo " + match.model + " é compatível!</strong><br>" + match.note;
+        banner.innerHTML = "<strong>O modelo " + match.model + " é compatível!</strong>" + qrSuffix + "<br>" + match.note;
     } else {
-        banner.innerHTML = "<strong>Detectamos: " + match.brand + " " + match.model + "</strong><br>Status atual: " + label + ". " + match.note;
+        banner.innerHTML = "<strong>Detectamos: " + match.brand + " " + match.model + "</strong>" + qrSuffix + "<br>Status atual: " + label + ". " + match.note;
     }
 
     if (searchInput) {
@@ -912,18 +911,20 @@ function renderDeviceMatchBanner(brand, ua){
     var brandLabel = BRAND_LABEL[brand] || (brand.charAt(0).toUpperCase() + brand.slice(1));
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML =
-      "<strong>Aparelho da linha " + brandLabel + " detectado!</strong><br>" +
+      "<strong>Aparelho da linha " + brandLabel + " detectado!</strong>" + qrSuffix + "<br>" +
       "Confira a tabela abaixo para ver o status exato do seu modelo.";
   } else {
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML = "Não conseguimos identificar automaticamente o seu aparelho. Use a busca abaixo para conferir o seu modelo.";
   }
 
-  // Auto-scroll respeitando preferências de movimento
+  // Auto-scroll respeitando preferências de movimento. Quem veio do QR Code já tomou a decisão
+  // de ver esta seção ao escanear — não faz sentido esperar o mesmo delay de uma visita orgânica.
+  var scrollDelay = isFromQR ? 0 : 900;
   setTimeout(function(){
     var target = document.getElementById("celulares");
     if (target) target.scrollIntoView({ behavior: isReducedMotionPreferred ? "auto" : "smooth", block: "start" });
-  }, 900);
+  }, scrollDelay);
 }
 
 /* ============================================================
@@ -974,16 +975,23 @@ function initSmartHero() {
   if (!heroDynamic) return;
 
   var ua = navigator.userAgent || '';
+  // Detecção mobile robusta: o user-agent é o sinal primário (mais confiável), mas somamos
+  // sinais de toque como reforço — alguns navegadores in-app (ex: abrir o link direto da câmera
+  // ao ler o QR Code) reportam navigator.maxTouchPoints de forma inconsistente (às vezes 0 ou 1
+  // mesmo em telas touch reais), então não exigimos um valor mínimo alto para esse sinal.
+  var hasCoarseTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
   var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
-                 (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
-                 window.innerWidth < 768; // Refinado para considerar iPads modernos e afins
+                 (hasCoarseTouch && window.innerWidth < 1024) ||
+                 window.innerWidth < 768;
 
   var brand = 'generic';
 
   if (isMobile) {
     // Detecção case-insensitive por marca; padrões restritos para evitar falsos
     // positivos (ex: "xt" isolado casava com qualquer string contendo essas letras).
-    if (/iphone|ipad|ipod|mac/i.test(ua) && navigator.maxTouchPoints > 1) brand = 'apple';
+    // maxTouchPoints > 0 (em vez de > 1) porque alguns webviews de apps de câmera/QR
+    // reportam esse valor de forma mais conservadora que o Safari/Chrome padrão.
+    if (/iphone|ipad|ipod|mac/i.test(ua) && navigator.maxTouchPoints > 0) brand = 'apple';
     else if (/samsung|sm-/i.test(ua)) brand = 'samsung';
     else if (/motorola|\bmoto\b|\bxt\d{3,4}\b/i.test(ua)) brand = 'motorola';
     else if (/pixel|nexus/i.test(ua)) brand = 'google';
@@ -1074,7 +1082,11 @@ function initSmartHero() {
   }
 
   // Seletor exclusivo de Desktop (QR Code) só roda em Desktop.
+  // hero-qr-mode acalma visualmente a cena 3D animada de fundo, para o cartão do QR Code
+  // não competir com ela (era isso que deixava a tela "feia" — QR nítido sobre fundo calmo).
   if (!isMobile) {
+    var heroElDesktop = document.querySelector('.hero');
+    if (heroElDesktop) heroElDesktop.classList.add('hero-qr-mode');
     loadQRCodeLib();
   }
 }
