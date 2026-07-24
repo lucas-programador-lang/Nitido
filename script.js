@@ -842,28 +842,29 @@ function findDeviceMatch(ua, brand){
   if (typeof DEVICES === "undefined") return null;
 
   var uaLower = String(ua || "").toLowerCase().trim();
+  var brandNorm = String(brand || "").toLowerCase().trim();
   var matchedModelName = null;
   var gpu = getGPUInfo().toLowerCase();
 
-  // A. Tentativa Primária: Hardware Fingerprinting exato (Especialmente preciso para Apple)
+  // A. Hardware Fingerprinting exato — mais preciso para Apple.
+  // (Removida a ramificação redundante: ambos os branches atribuíam o mesmo valor.
+  // A única regra real é: só aceitar o fingerprint como Apple se a GPU também confirmar Apple,
+  // evitando falso positivo de um Android que por acaso colida com uma resolução da tabela.)
   var fingerprint = getHardwareFingerprint();
   if (HARDWARE_FINGERPRINT_MAP[fingerprint]) {
-    // Cruza a informação extra da GPU se for um dispositivo Apple para evitar falsos positivos
-    if (brand === "apple" || gpu.includes("apple")) {
-       matchedModelName = HARDWARE_FINGERPRINT_MAP[fingerprint];
-    } else if (brand !== "apple") {
-       matchedModelName = HARDWARE_FINGERPRINT_MAP[fingerprint];
+    var isAppleSignal = (brandNorm === "apple" || gpu.includes("apple"));
+    if (brandNorm !== "apple" || isAppleSignal) {
+      matchedModelName = HARDWARE_FINGERPRINT_MAP[fingerprint];
     }
   }
 
   // A2. Fallback por faixa aproximada — só Apple, só se a resolução exata não bateu acima.
-  if (!matchedModelName && brand === "apple") {
+  if (!matchedModelName && brandNorm === "apple") {
     matchedModelName = guessAppleModelByWidth();
   }
 
-  // B. Tentativa Secundária: Fallback via User-Agent (case-insensitive, padrão ouro para Android
-  // — mas cada vez menos confiável em navegadores modernos que ocultam o código do modelo).
-  if (!matchedModelName && (brand === "samsung" || brand === "google" || brand === "motorola")){
+  // B. Fallback via User-Agent (case-insensitive) — Android.
+  if (!matchedModelName && (brandNorm === "samsung" || brandNorm === "google" || brandNorm === "motorola")){
     for (var code in ANDROID_MODEL_CODE_MAP){
       if (uaLower.includes(code.toLowerCase())){
         matchedModelName = ANDROID_MODEL_CODE_MAP[code];
@@ -872,24 +873,20 @@ function findDeviceMatch(ua, brand){
     }
   }
 
-  // C. Varredura no array DEVICES local — matching flexível por palavras-chave, com
-  // .toLowerCase() e .trim() em ambas as pontas (nunca comparação rígida por .indexOf() bruto).
-  // Resolve casos como "iPhone 15 Pro Max" detectado batendo com "iPhone 15, 15 Pro, 15 Pro Max"
-  // cadastrado em DEVICES.
+  // C. Varredura em DEVICES — matching por palavras-chave, .toLowerCase() + .trim() nos dois lados,
+  // usando .includes() para aproximar "iPhone 15 Pro Max" detectado com "iPhone 15" cadastrado.
   if (matchedModelName) {
     var normalizedTarget = normalizeModelString(matchedModelName).trim();
     var keywords = normalizedTarget.split(" ").filter(Boolean);
 
-    // Passagem 1 (estrita): exige que TODAS as palavras-chave detectadas apareçam
-    // no texto do modelo cadastrado (ordem não importa, maiúsculas ignoradas).
+    // Passagem 1 (estrita): todas as palavras-chave detectadas precisam aparecer no modelo cadastrado.
     var foundByModel = DEVICES.filter(function(d){
       var modelNorm = normalizeModelString(d.model).trim();
       return keywords.every(function(kw){ return modelNorm.includes(kw); });
     });
 
-    // Passagem 2 (flexível): se a estrita não achou nada, aceita quando pelo menos
-    // todas as palavras-chave MENOS UMA baterem (cobre pequenas variações de escrita,
-    // como "Pro Max" detectado vs. "Pro" cadastrado).
+    // Passagem 2 (flexível): aceita quando todas as palavras-chave MENOS UMA baterem
+    // — cobre "Pro Max" detectado vs. "Pro" cadastrado, por exemplo.
     if (!foundByModel.length && keywords.length > 1){
       foundByModel = DEVICES.filter(function(d){
         var modelNorm = normalizeModelString(d.model).trim();
@@ -898,23 +895,21 @@ function findDeviceMatch(ua, brand){
       });
     }
 
-    if (foundByModel.length) return foundByModel; // retorna um ARRAY de compatíveis
+    if (foundByModel.length) return foundByModel; // array de compatíveis, ordem estável
   }
 
   return null;
 }
+
+var __bannerRenderToken = 0;
 
 function renderDeviceMatchBanner(brand, ua){
   var banner = document.getElementById("celularesMatchBanner");
   var searchInput = document.getElementById("deviceSearch");
   if (!banner) return;
 
-  // Detecta se o usuário chegou aqui pelo QR Code do Desktop (?src=qr). Isso NUNCA altera o
-  // resultado da detecção em si — o status exibido (compatível/pendente/não funciona/desconhecido)
-  // continua sendo sempre o resultado real do fingerprint. Forçar uma mensagem "positiva" fixa aqui
-  // seria enganoso: mostraria "compatível" para alguém com um aparelho que na verdade não funciona.
-  // O que o parâmetro realmente melhora: pula o delay artificial do scroll (quem escaneou o QR já
-  // decidiu ver a seção, não precisa esperar) e deixa isso explícito no texto do banner.
+  var myToken = ++__bannerRenderToken;
+
   var isFromQR = false;
   try { isFromQR = new URLSearchParams(window.location.search).get('src') === 'qr'; } catch (e) { isFromQR = false; }
 
@@ -922,26 +917,25 @@ function renderDeviceMatchBanner(brand, ua){
   var qrSuffix = isFromQR ? " <em>(detectado via QR Code)</em>" : "";
 
   var matchResult = findDeviceMatch(ua, brand);
-  // findDeviceMatch pode retornar um array de compatíveis — seleção estável: sempre
-  // usa o primeiro item da lista (mesma ordem do array DEVICES).
   var match = Array.isArray(matchResult) ? matchResult[0] : matchResult;
 
+  // Sempre sobrescreve className e innerHTML — a mensagem de erro/desconhecido anterior
+  // nunca permanece na tela quando um match positivo é encontrado.
   if (match){
     var st = overallStatus(match);
     var label = (typeof STATUS_LABEL !== "undefined" && STATUS_LABEL[st]) ? STATUS_LABEL[st] : st;
 
     banner.className = "device-match-banner status-" + st;
     if (st === "ok") {
-        banner.innerHTML = "<strong>O modelo " + match.model + " é compatível!</strong>" + qrSuffix + "<br>" + match.note;
+      banner.innerHTML = "<strong>O modelo " + match.model + " é compatível!</strong>" + qrSuffix + "<br>" + match.note;
     } else {
-        banner.innerHTML = "<strong>Detectamos: " + match.brand + " " + match.model + "</strong>" + qrSuffix + "<br>Status atual: " + label + ". " + match.note;
+      banner.innerHTML = "<strong>Detectamos: " + match.brand + " " + match.model + "</strong>" + qrSuffix + "<br>Status atual: " + label + ". " + match.note;
     }
 
     if (searchInput) {
-        searchInput.value = match.model;
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      searchInput.value = match.model;
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
-
   } else if (brand !== "generic"){
     var brandLabel = BRAND_LABEL[brand] || (brand.charAt(0).toUpperCase() + brand.slice(1));
     banner.className = "device-match-banner status-unknown";
@@ -953,10 +947,10 @@ function renderDeviceMatchBanner(brand, ua){
     banner.innerHTML = "Não conseguimos identificar automaticamente o seu aparelho. Use a busca abaixo para conferir o seu modelo.";
   }
 
-  // Auto-scroll respeitando preferências de movimento. Quem veio do QR Code já tomou a decisão
-  // de ver esta seção ao escanear — não faz sentido esperar o mesmo delay de uma visita orgânica.
+  // Scroll suave automático para #celulares. isFromQR já pula o delay artificial.
   var scrollDelay = isFromQR ? 0 : 900;
   setTimeout(function(){
+    if (myToken !== __bannerRenderToken) return; // uma chamada mais nova já assumiu
     var target = document.getElementById("celulares");
     if (target) target.scrollIntoView({ behavior: isReducedMotionPreferred ? "auto" : "smooth", block: "start" });
   }, scrollDelay);
@@ -1009,23 +1003,30 @@ function initSmartHero() {
   var heroDynamic = document.getElementById('heroDynamic');
   if (!heroDynamic) return;
 
+  // Trava de idempotência: evita reexecução (double DOMContentLoaded, hot reload, chamadas
+  // manuais duplicadas) que geraria innerHTML duplicado e leituras de elementos já substituídos.
+  if (heroDynamic.dataset.smartHeroInitialized === "true") return;
+  heroDynamic.dataset.smartHeroInitialized = "true";
+
   var ua = navigator.userAgent || '';
-  // Detecção mobile robusta: o user-agent é o sinal primário (mais confiável), mas somamos
-  // sinais de toque como reforço — alguns navegadores in-app (ex: abrir o link direto da câmera
-  // ao ler o QR Code) reportam navigator.maxTouchPoints de forma inconsistente (às vezes 0 ou 1
-  // mesmo em telas touch reais), então não exigimos um valor mínimo alto para esse sinal.
+
+  // Leitura explícita do parâmetro da URL do QR Code.
+  var qp;
+  try { qp = new URLSearchParams(window.location.search); } catch (e) { qp = null; }
+  var cameFromQR = !!(qp && qp.get('src') === 'qr');
+
   var hasCoarseTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
-  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+
+  // cameFromQR força isMobile=true: quem chegou por um QR Code leu com a câmera do celular,
+  // então tratamos como mobile mesmo se os sinais de touch/largura vierem ambíguos do webview.
+  var isMobile = cameFromQR ||
+                 /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
                  (hasCoarseTouch && window.innerWidth < 1024) ||
                  window.innerWidth < 768;
 
   var brand = 'generic';
 
   if (isMobile) {
-    // Detecção case-insensitive por marca; padrões restritos para evitar falsos
-    // positivos (ex: "xt" isolado casava com qualquer string contendo essas letras).
-    // maxTouchPoints > 0 (em vez de > 1) porque alguns webviews de apps de câmera/QR
-    // reportam esse valor de forma mais conservadora que o Safari/Chrome padrão.
     if (/iphone|ipad|ipod|mac/i.test(ua) && navigator.maxTouchPoints > 0) brand = 'apple';
     else if (/samsung|sm-/i.test(ua)) brand = 'samsung';
     else if (/motorola|\bmoto\b|\bxt\d{3,4}\b/i.test(ua)) brand = 'motorola';
@@ -1105,7 +1106,8 @@ function initSmartHero() {
   heroDynamic.innerHTML = html;
   heroDynamic.classList.add('visible');
 
-  // Seletores exclusivos de Mobile só rodam em Mobile.
+  // Seletores exclusivos de Mobile só rodam em Mobile — cameFromQR nunca escapa para o Desktop
+  // porque, se cameFromQR for true, isMobile já é true acima.
   if (isMobile) {
     var heroEl = document.querySelector('.hero');
     if (heroEl) heroEl.classList.add('hero-brand-' + brand);
@@ -1116,9 +1118,8 @@ function initSmartHero() {
     window.__setupStatCountUp();
   }
 
-  // Seletor exclusivo de Desktop (QR Code) só roda em Desktop.
-  // hero-qr-mode acalma visualmente a cena 3D animada de fundo, para o cartão do QR Code
-  // não competir com ela (era isso que deixava a tela "feia" — QR nítido sobre fundo calmo).
+  // Seletor exclusivo de Desktop (QR Code) só roda em Desktop — nunca tenta ler #qrContainer
+  // se a tela ativa for a de mobile, eliminando o erro nulo quando o elemento não existe no DOM.
   if (!isMobile) {
     var heroElDesktop = document.querySelector('.hero');
     if (heroElDesktop) heroElDesktop.classList.add('hero-qr-mode');
