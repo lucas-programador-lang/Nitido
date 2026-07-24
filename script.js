@@ -775,6 +775,25 @@ var HARDWARE_FINGERPRINT_MAP = {
   "412_915_2.625": "Pixel 7"
 };
 
+// 2b. Fallback por FAIXA de largura lógica (aproximado) — usado só para Apple, e só quando a
+// resolução exata não está no HARDWARE_FINGERPRINT_MAP acima. O Safari nunca revela o modelo
+// exato do iPhone (é bloqueado por privacidade), então mesmo essa faixa é uma aproximação; por
+// isso o resultado ainda passa pelo cruzamento por palavras-chave no bloco C antes de virar um
+// "match" — nunca declara compatibilidade com um modelo que não exista de fato em DEVICES.
+var APPLE_WIDTH_FALLBACK_RANGES = [
+  { maxWidth: 380, guess: "iPhone SE" },
+  { maxWidth: 400, guess: "iPhone 15" },
+  { maxWidth: 420, guess: "iPhone 15 Plus" },
+  { maxWidth: 999, guess: "iPhone 15 Pro Max" }
+];
+function guessAppleModelByWidth(){
+  var w = Math.min(window.screen.width, window.screen.height);
+  for (var i = 0; i < APPLE_WIDTH_FALLBACK_RANGES.length; i++){
+    if (w <= APPLE_WIDTH_FALLBACK_RANGES[i].maxWidth) return APPLE_WIDTH_FALLBACK_RANGES[i].guess;
+  }
+  return null;
+}
+
 // 3. Extrator de Assinatura WebGL (GPU) para refinamento e telemetria
 function getGPUInfo() {
   try {
@@ -807,18 +826,26 @@ function normalizeModelString(str){
     .trim();
 }
 
-// 5. Função Master de Identificação — matching case-insensitive e flexível por
-// palavras-chave. Toda comparação usa .toLowerCase() + .includes() (sem
-// diferenciar maiúsculas/minúsculas), tanto na leitura do user-agent quanto
-// no cruzamento com o array DEVICES.
+// 5. Função Master de Identificação — matching case-insensitive e flexível por palavras-chave.
+//
+// CORREÇÃO DO BUG REAL: nas versões anteriores, o cruzamento por palavras-chave (bloco C) só
+// rodava se um nome de modelo EXATO já tivesse sido resolvido pelo fingerprint de tela (12
+// resoluções cadastradas) ou pelo código Android no user-agent (ex: "SM-S911"). Só que:
+//   • o Safari nunca expõe o modelo exato do iPhone (bloqueio de privacidade da Apple), então
+//     qualquer resolução fora da tabela retornava null direto, sem nem tentar o cruzamento;
+//   • o Chrome moderno no Android vem REMOVENDO o código do modelo do user-agent por padrão
+//     (User-Agent Reduction/Client Hints), então ANDROID_MODEL_CODE_MAP cada vez bate menos.
+// Isso fazia a função desistir cedo demais. Agora, para Apple sem resolução exata cadastrada,
+// usamos uma faixa aproximada (guessAppleModelByWidth) só para GERAR um candidato — que ainda
+// precisa bater com um modelo real do DEVICES no bloco C abaixo antes de virar um resultado.
 function findDeviceMatch(ua, brand){
   if (typeof DEVICES === "undefined") return null;
 
-  var uaLower = String(ua || "").toLowerCase();
+  var uaLower = String(ua || "").toLowerCase().trim();
   var matchedModelName = null;
   var gpu = getGPUInfo().toLowerCase();
 
-  // A. Tentativa Primária: Hardware Fingerprinting (Especialmente preciso para Apple)
+  // A. Tentativa Primária: Hardware Fingerprinting exato (Especialmente preciso para Apple)
   var fingerprint = getHardwareFingerprint();
   if (HARDWARE_FINGERPRINT_MAP[fingerprint]) {
     // Cruza a informação extra da GPU se for um dispositivo Apple para evitar falsos positivos
@@ -829,7 +856,13 @@ function findDeviceMatch(ua, brand){
     }
   }
 
-  // B. Tentativa Secundária: Fallback via User-Agent (case-insensitive, padrão ouro para Android)
+  // A2. Fallback por faixa aproximada — só Apple, só se a resolução exata não bateu acima.
+  if (!matchedModelName && brand === "apple") {
+    matchedModelName = guessAppleModelByWidth();
+  }
+
+  // B. Tentativa Secundária: Fallback via User-Agent (case-insensitive, padrão ouro para Android
+  // — mas cada vez menos confiável em navegadores modernos que ocultam o código do modelo).
   if (!matchedModelName && (brand === "samsung" || brand === "google" || brand === "motorola")){
     for (var code in ANDROID_MODEL_CODE_MAP){
       if (uaLower.includes(code.toLowerCase())){
@@ -839,25 +872,27 @@ function findDeviceMatch(ua, brand){
     }
   }
 
-  // C. Varredura no array DEVICES local — matching flexível por palavras-chave
-  // em vez de comparação rígida. Resolve casos como "iPhone 15 Pro Max" detectado no
-  // hardware batendo com "iPhone 15, 15 Pro, 15 Pro Max" cadastrado em DEVICES.
+  // C. Varredura no array DEVICES local — matching flexível por palavras-chave, com
+  // .toLowerCase() e .trim() em ambas as pontas (nunca comparação rígida por .indexOf() bruto).
+  // Resolve casos como "iPhone 15 Pro Max" detectado batendo com "iPhone 15, 15 Pro, 15 Pro Max"
+  // cadastrado em DEVICES.
   if (matchedModelName) {
-    var normalizedTarget = normalizeModelString(matchedModelName);
+    var normalizedTarget = normalizeModelString(matchedModelName).trim();
     var keywords = normalizedTarget.split(" ").filter(Boolean);
 
     // Passagem 1 (estrita): exige que TODAS as palavras-chave detectadas apareçam
     // no texto do modelo cadastrado (ordem não importa, maiúsculas ignoradas).
     var foundByModel = DEVICES.filter(function(d){
-      var modelNorm = normalizeModelString(d.model);
+      var modelNorm = normalizeModelString(d.model).trim();
       return keywords.every(function(kw){ return modelNorm.includes(kw); });
     });
 
     // Passagem 2 (flexível): se a estrita não achou nada, aceita quando pelo menos
-    // todas as palavras-chave MENOS UMA baterem (cobre pequenas variações de escrita).
+    // todas as palavras-chave MENOS UMA baterem (cobre pequenas variações de escrita,
+    // como "Pro Max" detectado vs. "Pro" cadastrado).
     if (!foundByModel.length && keywords.length > 1){
       foundByModel = DEVICES.filter(function(d){
-        var modelNorm = normalizeModelString(d.model);
+        var modelNorm = normalizeModelString(d.model).trim();
         var hits = keywords.filter(function(kw){ return modelNorm.includes(kw); }).length;
         return hits >= keywords.length - 1;
       });
@@ -912,7 +947,7 @@ function renderDeviceMatchBanner(brand, ua){
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML =
       "<strong>Aparelho da linha " + brandLabel + " detectado!</strong>" + qrSuffix + "<br>" +
-      "Confira a tabela abaixo para ver o status exato do seu modelo.";
+      "Use os filtros ou a busca abaixo para localizar seu modelo.";
   } else {
     banner.className = "device-match-banner status-unknown";
     banner.innerHTML = "Não conseguimos identificar automaticamente o seu aparelho. Use a busca abaixo para conferir o seu modelo.";
